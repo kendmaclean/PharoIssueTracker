@@ -7,16 +7,16 @@ Class {
 		'description',
 		'status',
 		'priority',
-		'createdAt'
+		'createdAt',
+		'dueDate'
 	],
 	#category : 'IssueTracker',
 	#package : 'IssueTracker'
 }
 
-{ #category : 'accessing' }
+{ #category : 'initialization' }
 Issue >> createdAt [
-
-	^ createdAt
+    ^ createdAt
 ]
 
 { #category : 'accessing' }
@@ -39,10 +39,26 @@ Issue >> description: anObject [
 
 { #category : 'accessing' }
 Issue >> displayString [
+    | dueDateStr |
+    dueDateStr := dueDate 
+        ifNil: [ 'No due date' ]
+        ifNotNil: [ dueDate asDate asString ].
+    
     ^ String streamContents: [ :s |
         s << '[' << priority asString << '] '.
         s << title.
-        s << ' (' << status asString << ')' ]
+        s << ' (' << status asString << ') - Due: '.
+        s << dueDateStr ]
+]
+
+{ #category : 'initialization' }
+Issue >> dueDate [
+    ^ dueDate
+]
+
+{ #category : 'initialization' }
+Issue >> dueDate: aDate [
+    dueDate := aDate
 ]
 
 { #category : 'accessing' }

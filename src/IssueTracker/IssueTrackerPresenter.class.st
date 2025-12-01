@@ -10,7 +10,16 @@ Class {
 		'statusDropdown',
 		'deleteButton',
 		'chartButton',
-		'issues'
+		'issues',
+		'sortByPriorityButton',
+		'sortByDateButton',
+		'hideClosedButton',
+		'hideClosedIssues',
+		'dueDateInput',
+		'dueDateFilter',
+		'showTodayButton',
+		'showWeekButton',
+		'showAllButton'
 	],
 	#category : 'IssueTracker',
 	#package : 'IssueTracker'
@@ -41,12 +50,14 @@ IssueTrackerPresenter >> addIssue [
     issue description: descriptionInput text.
     issue priority: priorityDropdown selectedItem.
     issue status: statusDropdown selectedItem.
+    issue dueDate: dueDateInput date.
     
     issues add: issue.
     self updateIssueList.
     
     titleInput text: ''.
-    descriptionInput text: ''
+    descriptionInput text: ''.
+    dueDateInput date: nil
 ]
 
 { #category : 'initialization' }
@@ -73,6 +84,14 @@ IssueTrackerPresenter >> defaultLayout [
             add: statusDropdown;
             yourself) expand: false;
         add: (SpBoxLayout newLeftToRight
+            add: 'Due Date:' expand: false;
+            add: dueDateInput;
+            add: (self newButton 
+                label: 'Update Date';
+                action: [ self updateDueDate ];
+                yourself) expand: false;
+            yourself) expand: false;
+        add: (SpBoxLayout newLeftToRight
             add: 'Description:' expand: false;
             add: descriptionInput;
             yourself);
@@ -81,8 +100,20 @@ IssueTrackerPresenter >> defaultLayout [
             add: deleteButton;
             add: chartButton;
             yourself) expand: false;
-        add: 'Issues:' expand: false;
-        add: issueList;
+        add: (SpBoxLayout newLeftToRight
+            add: (SpBoxLayout newTopToBottom
+                spacing: 5;
+                add: showTodayButton expand: false;
+                add: showWeekButton expand: false;
+                add: hideClosedButton expand: false;
+                add: showAllButton expand: false;
+                yourself) width: 120;
+            add: issueList;
+            yourself);
+        add: (SpBoxLayout newLeftToRight
+            add: sortByPriorityButton;
+            add: sortByDateButton;
+            yourself) expand: false;
         yourself
 ]
 
@@ -96,39 +127,91 @@ IssueTrackerPresenter >> deleteIssue [
 
 { #category : 'initialization' }
 IssueTrackerPresenter >> initializePresenters [
-    issues := OrderedCollection new.
-    
-    issueList := self newList.
-    issueList display: [ :issue | issue displayString ].
-    issueList whenSelectedDo: [ :issue | self onIssueSelected: issue ].
-    
-    titleInput := self newTextInput.
-    titleInput placeholder: 'Issue title...'.
-    
-    descriptionInput := self newText.
-    descriptionInput placeholder: 'Issue description...'.
-    
-    priorityDropdown := self newDropList.
-    priorityDropdown items: #(low medium high critical).
-    priorityDropdown selectIndex: 2.
-    
-    statusDropdown := self newDropList.
-    statusDropdown items: #(open inProgress resolved closed).
-    statusDropdown selectIndex: 1.
-    statusDropdown whenSelectedItemChangedDo: [ :item | self onStatusChanged ].
-    
-    addButton := self newButton.
-    addButton label: 'Add Issue'.
-    addButton action: [ self addIssue ].
-    
-    deleteButton := self newButton.
-    deleteButton label: 'Delete'.
-    deleteButton action: [ self deleteIssue ].
-    deleteButton disable.
-    
-    chartButton := self newButton.
-    chartButton label: 'View Chart'.
-    chartButton action: [ self showChart ]
+
+	issues := OrderedCollection new.
+	hideClosedIssues := false.
+	dueDateFilter := #all.
+
+	issueList := self newList.
+	issueList display: [ :issue | issue displayString ].
+	issueList whenSelectedDo: [ :issue | self onIssueSelected: issue ].
+
+	titleInput := self newTextInput.
+	titleInput placeholder: 'Issue title...'.
+	titleInput whenTextChangedDo: [ :newText |
+		self onTitleChanged: newText ].
+
+	descriptionInput := self newText.
+	descriptionInput placeholder: 'Issue description...'.
+	descriptionInput whenTextChangedDo: [ :newText |
+		self onDescriptionChanged: newText ].
+
+	dueDateInput := self instantiate: SpDatePresenter.
+	dueDateInput whenDateChanged: [ :newText |
+		self onDueDateChanged: newText ].
+
+
+	priorityDropdown := self newDropList.
+	priorityDropdown items: #( low medium high critical ).
+	priorityDropdown selectIndex: 2.
+	priorityDropdown whenSelectedItemChangedDo: [ :item |
+		self onPriorityChanged ].
+
+	statusDropdown := self newDropList.
+	statusDropdown items: #( open inProgress resolved closed ).
+	statusDropdown selectIndex: 1.
+	statusDropdown whenSelectedItemChangedDo: [ :item |
+		self onStatusChanged ].
+
+	addButton := self newButton.
+	addButton label: 'Add Issue'.
+	addButton action: [ self addIssue ].
+
+	deleteButton := self newButton.
+	deleteButton label: 'Delete'.
+	deleteButton action: [ self deleteIssue ].
+	deleteButton disable.
+
+	chartButton := self newButton.
+	chartButton label: 'View Chart'.
+	chartButton action: [ self showChart ].
+
+	sortByPriorityButton := self newButton.
+	sortByPriorityButton label: 'Sort by Priority'.
+	sortByPriorityButton action: [ self sortByPriority ].
+
+	sortByDateButton := self newButton.
+	sortByDateButton label: 'Sort by Due Date'.
+	sortByDateButton action: [ self sortByDueDate ].
+
+	hideClosedButton := self newButton.
+	hideClosedButton label: 'Hide Closed'.
+	hideClosedButton action: [ self toggleHideClosed ].
+
+	showTodayButton := self newButton.
+	showTodayButton label: 'Due Today'.
+	showTodayButton action: [ self showDueToday ].
+
+	showWeekButton := self newButton.
+	showWeekButton label: 'Due This Week'.
+	showWeekButton action: [ self showDueThisWeek ].
+
+	showAllButton := self newButton.
+	showAllButton label: 'Show All'.
+	showAllButton action: [ self showAllDueDates ]
+]
+
+{ #category : 'initialization' }
+IssueTrackerPresenter >> onDescriptionChanged: newText [
+    issueList selectedItem ifNotNil: [ :issue |
+        issue description: newText ]
+]
+
+{ #category : 'initialization' }
+IssueTrackerPresenter >> onDueDateChanged: newDate [
+    issueList selectedItem ifNotNil: [ :issue |
+        issue dueDate: newDate.
+        self updateIssueList ]
 ]
 
 { #category : 'initialization' }
@@ -138,7 +221,15 @@ IssueTrackerPresenter >> onIssueSelected: anIssue [
         descriptionInput text: anIssue description.
         statusDropdown selectItem: anIssue status.
         priorityDropdown selectItem: anIssue priority.
+        dueDateInput date: anIssue dueDate.
         deleteButton enable ]
+]
+
+{ #category : 'initialization' }
+IssueTrackerPresenter >> onPriorityChanged [
+    issueList selectedItem ifNotNil: [ :issue |
+        issue priority: priorityDropdown selectedItem.
+        self updateIssueList ]
 ]
 
 { #category : 'initialization' }
@@ -149,8 +240,21 @@ IssueTrackerPresenter >> onStatusChanged [
 ]
 
 { #category : 'initialization' }
+IssueTrackerPresenter >> onTitleChanged: newText [
+    issueList selectedItem ifNotNil: [ :issue |
+        issue title: newText.
+        self updateIssueList ]
+]
+
+{ #category : 'initialization' }
+IssueTrackerPresenter >> showAllDueDates [
+    dueDateFilter := #all.
+    self updateIssueList
+]
+
+{ #category : 'initialization' }
 IssueTrackerPresenter >> showChart [
-    | canvas builder shapes legend statusCounts bars |
+    | canvas builder statusCounts bars |
     issues ifEmpty: [ 
         self inform: 'No issues to display'.
         ^ self ].
@@ -161,7 +265,7 @@ IssueTrackerPresenter >> showChart [
     #(open inProgress resolved closed) do: [ :status |
         statusCounts at: status put: (issues count: [ :i | i status = status ]) ].
     
-    builder := RSChart new.
+    builder := RSCompositeChart new.
     builder extent: 600@400.
     
     bars := statusCounts associations collect: [ :assoc |
@@ -190,6 +294,91 @@ IssueTrackerPresenter >> showChart [
 ]
 
 { #category : 'initialization' }
+IssueTrackerPresenter >> showDueThisWeek [
+    dueDateFilter := #week.
+    self updateIssueList
+]
+
+{ #category : 'initialization' }
+IssueTrackerPresenter >> showDueToday [
+    dueDateFilter := #today.
+    self updateIssueList
+]
+
+{ #category : 'initialization' }
+IssueTrackerPresenter >> sortByDate [
+    issues := issues sorted: [ :a :b | 
+        a createdAt > b createdAt ].
+    
+    self updateIssueList
+]
+
+{ #category : 'initialization' }
+IssueTrackerPresenter >> sortByDueDate [
+    issues := issues sorted: [ :a :b | 
+        | aDate bDate |
+        aDate := a dueDate ifNil: [ Date today addDays: 10000 ].
+        bDate := b dueDate ifNil: [ Date today addDays: 10000 ].
+        aDate < bDate ].
+    
+    self updateIssueList
+]
+
+{ #category : 'initialization' }
+IssueTrackerPresenter >> sortByPriority [
+    | priorityOrder |
+    priorityOrder := Dictionary new
+        at: #critical put: 1;
+        at: #high put: 2;
+        at: #medium put: 3;
+        at: #low put: 4;
+        yourself.
+    
+    issues := issues sorted: [ :a :b | 
+        (priorityOrder at: a priority) < (priorityOrder at: b priority) ].
+    
+    self updateIssueList
+]
+
+{ #category : 'initialization' }
+IssueTrackerPresenter >> toggleHideClosed [
+    hideClosedIssues := hideClosedIssues not.
+    
+    hideClosedButton label: (hideClosedIssues
+        ifTrue: [ 'Show Closed' ]
+        ifFalse: [ 'Hide Closed' ]).
+    
+    self updateIssueList
+]
+
+{ #category : 'initialization' }
+IssueTrackerPresenter >> updateDueDate [
+    issueList selectedItem ifNotNil: [ :issue |
+        issue dueDate: dueDateInput date.
+        self updateIssueList ]
+]
+
+{ #category : 'initialization' }
 IssueTrackerPresenter >> updateIssueList [
-    issueList items: issues
+    | filteredIssues |
+    filteredIssues := issues.
+    
+    "Apply closed filter"
+    hideClosedIssues ifTrue: [
+        filteredIssues := filteredIssues reject: [ :issue | issue status = #closed ] ].
+    
+    "Apply due date filter"
+    dueDateFilter = #today ifTrue: [
+        filteredIssues := filteredIssues select: [ :issue |
+            issue dueDate notNil and: [ issue dueDate asDate = Date today ] ] ].
+    
+    dueDateFilter = #week ifTrue: [
+        | today weekFromNow |
+        today := Date today.
+        weekFromNow := today addDays: 7.
+        filteredIssues := filteredIssues select: [ :issue |
+            issue dueDate notNil and: [ 
+                issue dueDate asDate between: today and: weekFromNow ] ] ].
+    
+    issueList items: filteredIssues
 ]
