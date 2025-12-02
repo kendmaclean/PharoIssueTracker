@@ -39,16 +39,30 @@ Issue >> description: anObject [
 
 { #category : 'accessing' }
 Issue >> displayString [
-    | dueDateStr |
-    dueDateStr := dueDate 
-        ifNil: [ 'No due date' ]
-        ifNotNil: [ dueDate asDate asString ].
-    
-    ^ String streamContents: [ :s |
+
+	| text dueDateStr descFirstLine |
+	dueDateStr := dueDate
+		              ifNil: [ 'No due date' ]
+		              ifNotNil: [ dueDate asDate asString ].
+
+	descFirstLine := description ifNil: [ '' ] ifNotNil: [
+		                 | lines |
+		                 lines := description lines.
+		                 lines
+			                 ifEmpty: [ '' ]
+			                 ifNotEmpty: [
+			                 ' - ' , (lines first truncateTo: 50) ] ].
+
+    text := Text streamContents: [ :s |
         s << '[' << priority asString << '] '.
-        s << title.
-        s << ' (' << status asString << ') - Due: '.
-        s << dueDateStr ]
+        s 
+            nextPutAll: title asText allBold;
+            nextPutAll: ' ('.
+        s << status asString << ') - Due: '.
+        s << dueDateStr.
+        s << descFirstLine ].
+    
+    ^ text
 ]
 
 { #category : 'initialization' }

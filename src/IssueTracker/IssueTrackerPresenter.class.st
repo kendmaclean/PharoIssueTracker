@@ -52,7 +52,8 @@ IssueTrackerPresenter >> addIssue [
     issue status: statusDropdown selectedItem.
     issue dueDate: dueDateInput date.
     
-    issues add: issue.
+    IssueRepository uniqueInstance addIssue: issue.
+    issues := IssueRepository uniqueInstance allIssues.
     self updateIssueList.
     
     titleInput text: ''.
@@ -71,64 +72,74 @@ IssueTrackerPresenter >> colorForStatus: aStatus [
 
 { #category : 'initialization' }
 IssueTrackerPresenter >> defaultLayout [
-    ^ SpBoxLayout newTopToBottom
-        spacing: 5;
-        add: (SpBoxLayout newLeftToRight
-            add: 'Title:' expand: false;
-            add: titleInput;
-            yourself) expand: false;
-        add: (SpBoxLayout newLeftToRight
-            add: 'Priority:' expand: false;
-            add: priorityDropdown;
-            add: 'Status:' expand: false;
-            add: statusDropdown;
-            yourself) expand: false;
-        add: (SpBoxLayout newLeftToRight
-            add: 'Due Date:' expand: false;
-            add: dueDateInput;
-            add: (self newButton 
-                label: 'Update Date';
-                action: [ self updateDueDate ];
-                yourself) expand: false;
-            yourself) expand: false;
-        add: (SpBoxLayout newLeftToRight
-            add: 'Description:' expand: false;
-            add: descriptionInput;
-            yourself);
-        add: (SpBoxLayout newLeftToRight
-            add: addButton;
-            add: deleteButton;
-            add: chartButton;
-            yourself) expand: false;
-        add: (SpBoxLayout newLeftToRight
-            add: (SpBoxLayout newTopToBottom
-                spacing: 5;
-                add: showTodayButton expand: false;
-                add: showWeekButton expand: false;
-                add: hideClosedButton expand: false;
-                add: showAllButton expand: false;
-                yourself) width: 120;
-            add: issueList;
-            yourself);
-        add: (SpBoxLayout newLeftToRight
-            add: sortByPriorityButton;
-            add: sortByDateButton;
-            yourself) expand: false;
-        yourself
+
+	^ SpBoxLayout newTopToBottom
+		  spacing: 5;
+		  add: (SpBoxLayout newLeftToRight
+				   add: 'Title:' expand: false;
+				   add: titleInput;
+				   yourself)
+		  expand: false;
+		  add: (SpBoxLayout newLeftToRight
+				   add: 'Priority:' expand: false;
+				   add: priorityDropdown;
+				   add: 'Status:' expand: false;
+				   add: statusDropdown;
+				   yourself)
+		  expand: false;
+		  add: (SpBoxLayout newLeftToRight
+				   add: 'Due Date:' expand: false;
+				   add: dueDateInput;
+				   "add: (self newButton
+						    label: 'Update Date';
+						    action: [ self updateDueDate ];
+						    yourself)
+				   expand: false;"
+				   yourself)
+		  expand: false;
+		  add: (SpBoxLayout newLeftToRight
+				   add: 'Description:' expand: false;
+				   add: descriptionInput;
+				   yourself);
+		  add: (SpBoxLayout newLeftToRight
+				   add: addButton;
+				   add: deleteButton;
+				   add: chartButton;
+				   yourself)
+		  expand: false;
+		  add: (SpBoxLayout newLeftToRight
+				   add: (SpBoxLayout newTopToBottom
+						    spacing: 5;
+						    add: showTodayButton expand: false;
+						    add: showWeekButton expand: false;
+						    add: hideClosedButton expand: false;
+						    add: showAllButton expand: false;
+						    yourself)
+				   width: 120;
+				   add: issueList;
+				   yourself);
+		  add: (SpBoxLayout newLeftToRight
+				   add: sortByPriorityButton;
+				   add: sortByDateButton;
+				   yourself)
+		  expand: false;
+		  yourself
 ]
 
 { #category : 'initialization' }
 IssueTrackerPresenter >> deleteIssue [
     issueList selectedItem ifNotNil: [ :issue |
-        issues remove: issue.
+        IssueRepository uniqueInstance removeIssue: issue.
+        issues := IssueRepository uniqueInstance allIssues.
         self updateIssueList.
         deleteButton disable ]
 ]
 
 { #category : 'initialization' }
 IssueTrackerPresenter >> initializePresenters [
-
-	issues := OrderedCollection new.
+	| title |
+	
+	issues := IssueRepository uniqueInstance allIssues.
 	hideClosedIssues := false.
 	dueDateFilter := #all.
 
@@ -136,20 +147,20 @@ IssueTrackerPresenter >> initializePresenters [
 	issueList display: [ :issue | issue displayString ].
 	issueList whenSelectedDo: [ :issue | self onIssueSelected: issue ].
 
-	titleInput := self newTextInput.
-	titleInput placeholder: 'Issue title...'.
-	titleInput whenTextChangedDo: [ :newText |
-		self onTitleChanged: newText ].
 
-	descriptionInput := self newText.
-	descriptionInput placeholder: 'Issue description...'.
-	descriptionInput whenTextChangedDo: [ :newText |
+	titleInput := SpTextInputFieldPresenter new.
+	titleInput placeholder: 'Issue title... (enter key to save)'.
+	titleInput whenSubmitDo: [ :newText |
+		self onTitleChanged: newText. ].
+
+	descriptionInput := SpTextPresenter new.
+	descriptionInput placeholder: 'Issue description... (ctrl-s to save)'.
+	descriptionInput whenSubmitDo: [ :newText |
 		self onDescriptionChanged: newText ].
 
 	dueDateInput := self instantiate: SpDatePresenter.
-	dueDateInput whenDateChanged: [ :newText |
-		self onDueDateChanged: newText ].
-
+	dueDateInput whenDateChanged: [ :newDate |
+		self onDueDateChanged: newDate ].
 
 	priorityDropdown := self newDropList.
 	priorityDropdown items: #( low medium high critical ).
@@ -198,13 +209,17 @@ IssueTrackerPresenter >> initializePresenters [
 
 	showAllButton := self newButton.
 	showAllButton label: 'Show All'.
-	showAllButton action: [ self showAllDueDates ]
+	showAllButton action: [ self showAllDueDates ].
+
+	self updateIssueList
 ]
 
 { #category : 'initialization' }
 IssueTrackerPresenter >> onDescriptionChanged: newText [
-    issueList selectedItem ifNotNil: [ :issue |
-        issue description: newText ]
+
+	issueList selectedItem ifNotNil: [ :issue |
+		issue description: newText.
+		self updateIssueList ]
 ]
 
 { #category : 'initialization' }
@@ -241,9 +256,10 @@ IssueTrackerPresenter >> onStatusChanged [
 
 { #category : 'initialization' }
 IssueTrackerPresenter >> onTitleChanged: newText [
-    issueList selectedItem ifNotNil: [ :issue |
-        issue title: newText.
-        self updateIssueList ]
+
+	issueList selectedItem ifNotNil: [ :issue |
+		issue title: newText.
+		self updateIssueList ]
 ]
 
 { #category : 'initialization' }
