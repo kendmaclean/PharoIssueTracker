@@ -38,6 +38,11 @@ IssueTrackerPresenter class >> open [
     ^ self new open
 ]
 
+{ #category : 'instance creation' }
+IssueTrackerPresenter class >> startUp: resuming [
+    resuming ifTrue: [ self open ]
+]
+
 { #category : 'initialization' }
 IssueTrackerPresenter >> addIssue [
     | issue |
@@ -72,9 +77,27 @@ IssueTrackerPresenter >> colorForStatus: aStatus [
 
 { #category : 'initialization' }
 IssueTrackerPresenter >> defaultLayout [
-
 	^ SpBoxLayout newTopToBottom
 		  spacing: 5;
+		  "List at the top with filter buttons"
+		  add: (SpBoxLayout newLeftToRight
+				   add: (SpBoxLayout newTopToBottom
+						    spacing: 5;
+						    add: showTodayButton expand: false;
+						    add: showWeekButton expand: false;
+						    add: hideClosedButton expand: false;
+						    add: showAllButton expand: false;
+						    yourself)
+				   width: 120;
+				   add: issueList;
+				   yourself);
+		  "Sorting buttons"
+		  add: (SpBoxLayout newLeftToRight
+				   add: sortByPriorityButton;
+				   add: sortByDateButton;
+				   yourself)
+		  expand: false;
+		  "Detail section below"
 		  add: (SpBoxLayout newLeftToRight
 				   add: 'Title:' expand: false;
 				   add: titleInput;
@@ -90,11 +113,6 @@ IssueTrackerPresenter >> defaultLayout [
 		  add: (SpBoxLayout newLeftToRight
 				   add: 'Due Date:' expand: false;
 				   add: dueDateInput;
-				   "add: (self newButton
-						    label: 'Update Date';
-						    action: [ self updateDueDate ];
-						    yourself)
-				   expand: false;"
 				   yourself)
 		  expand: false;
 		  add: (SpBoxLayout newLeftToRight
@@ -105,22 +123,6 @@ IssueTrackerPresenter >> defaultLayout [
 				   add: addButton;
 				   add: deleteButton;
 				   add: chartButton;
-				   yourself)
-		  expand: false;
-		  add: (SpBoxLayout newLeftToRight
-				   add: (SpBoxLayout newTopToBottom
-						    spacing: 5;
-						    add: showTodayButton expand: false;
-						    add: showWeekButton expand: false;
-						    add: hideClosedButton expand: false;
-						    add: showAllButton expand: false;
-						    yourself)
-				   width: 120;
-				   add: issueList;
-				   yourself);
-		  add: (SpBoxLayout newLeftToRight
-				   add: sortByPriorityButton;
-				   add: sortByDateButton;
 				   yourself)
 		  expand: false;
 		  yourself
@@ -212,6 +214,14 @@ IssueTrackerPresenter >> initializePresenters [
 	showAllButton action: [ self showAllDueDates ].
 
 	self updateIssueList
+]
+
+{ #category : 'initialization' }
+IssueTrackerPresenter >> initializeWindow: aWindowPresenter [
+	aWindowPresenter
+		title: 'Issue Tracker';
+		initialExtent: 600@800
+
 ]
 
 { #category : 'initialization' }
