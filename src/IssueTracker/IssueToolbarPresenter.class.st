@@ -7,6 +7,7 @@ Class {
 		'showWeekButton',
 		'hideClosedButton',
 		'chartButton',
+		'saveButton',
 		'dueDateFilter',
 		'hideClosedIssues'
 	],
@@ -23,6 +24,7 @@ IssueToolbarPresenter >> defaultLayout [
 		add: showWeekButton;
 		add: hideClosedButton;
 		addLast: chartButton;
+		addLast: saveButton;
 		yourself
 ]
 
@@ -71,7 +73,20 @@ IssueToolbarPresenter >> initializePresenters [
 		label: 'Chart';
 		icon: (self iconNamed: #chart);
 		action: [ self onShowChart ];
+		yourself.
+		
+	saveButton := self newButton
+		label: 'Save';
+		icon: (self iconNamed: #smallSave);
+		help: 'Save Pharo image';
+		action: [ self onSaveImage ];
 		yourself
+]
+
+{ #category : 'initialization' }
+IssueToolbarPresenter >> onSaveImage [
+	Smalltalk snapshot: true andQuit: false.
+	self owner inform: 'Image saved successfully'
 ]
 
 { #category : 'initialization' }
