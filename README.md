@@ -1,2 +1,2 @@
 # PharoIssueTracker
-Simple Persoanl Issue Tracker written in Pharo 12
+Simple Personal Issue Tracker written in Pharo 12
