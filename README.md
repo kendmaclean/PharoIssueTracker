@@ -1,4 +1,4 @@
-# Draft PharoIssueTracker
+# Draft Pharo IssueTracker
 
 Installation from a pharo v12 image, use:
 
