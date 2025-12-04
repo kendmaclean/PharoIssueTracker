@@ -17,15 +17,17 @@ Class {
 
 { #category : 'initialization' }
 IssueToolbarPresenter >> defaultLayout [
+
 	^ SpBoxLayout newLeftToRight
-		spacing: 5;
-		add: showAllButton;
-		add: showTodayButton;
-		add: showWeekButton;
-		add: hideClosedButton;
-		addLast: chartButton;
-		addLast: saveButton;
-		yourself
+		  spacing: 5;
+		  add: showAllButton;
+		  add: showTodayButton;
+		  add: showWeekButton;
+		  add: hideClosedButton;
+		  add: ' ';
+		  addLast: chartButton;
+		  addLast: saveButton;
+		  yourself
 ]
 
 { #category : 'initialization' }
@@ -85,8 +87,9 @@ IssueToolbarPresenter >> initializePresenters [
 
 { #category : 'initialization' }
 IssueToolbarPresenter >> onSaveImage [
+
 	Smalltalk snapshot: true andQuit: false.
-	self owner inform: 'Image saved successfully'
+	self owner inform: 'Image saved successfully (includes the IssueRepository)'
 ]
 
 { #category : 'initialization' }

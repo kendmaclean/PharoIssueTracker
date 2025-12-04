@@ -1,3 +1,10 @@
+"
+why use self instantiate?
+
+When you use self instantiate: IssueToolbarPresenter (or any sub-presenter), Spec2 automatically sets the owner of that sub-presenter to be the parent presenter that instantiated it.
+
+""self owner"" refers to the parent presenter
+"
 Class {
 	#name : 'IssueTrackerPresenter',
 	#superclass : 'SpPresenter',
