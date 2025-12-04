@@ -41,7 +41,7 @@ IssueTrackerPresenter >> colorForStatus: aStatus [
 
 { #category : 'initialization' }
 IssueTrackerPresenter >> defaultLayout [
-	"test"
+
 	^ SpBoxLayout newTopToBottom
 		  spacing: 0;
 		  add: toolbar expand: false;
