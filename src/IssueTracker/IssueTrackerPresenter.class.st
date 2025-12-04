@@ -41,15 +41,16 @@ IssueTrackerPresenter >> colorForStatus: aStatus [
 
 { #category : 'initialization' }
 IssueTrackerPresenter >> defaultLayout [
+	"test"
 	^ SpBoxLayout newTopToBottom
-		spacing: 0;
-		add: toolbar expand: false;
-		add: (SpPanedLayout newTopToBottom
-			positionOfSlider: 0.6;
-			add: issueList;
-			add: detailsForm;
-			yourself);
-		yourself
+		  spacing: 0;
+		  add: toolbar expand: false;
+		  add: (SpPanedLayout newTopToBottom
+				   positionOfSlider: 0.6;
+				   add: issueList;
+				   add: detailsForm;
+				   yourself);
+		  yourself
 ]
 
 { #category : 'initialization' }
