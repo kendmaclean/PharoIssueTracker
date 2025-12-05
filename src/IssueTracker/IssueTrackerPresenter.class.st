@@ -25,11 +25,6 @@ IssueTrackerPresenter class >> open [
 	^ self new open
 ]
 
-{ #category : 'instance creation' }
-IssueTrackerPresenter class >> startUp: resuming [
-	resuming ifTrue: [ self open ]
-]
-
 { #category : 'initialization' }
 IssueTrackerPresenter >> colorForStatus: aStatus [
 	aStatus = #open ifTrue: [ ^ Color cyan ].
@@ -40,13 +35,18 @@ IssueTrackerPresenter >> colorForStatus: aStatus [
 ]
 
 { #category : 'initialization' }
+IssueTrackerPresenter >> currentIssue [
+    ^ currentIssue
+]
+
+{ #category : 'initialization' }
 IssueTrackerPresenter >> defaultLayout [
 
 	^ SpBoxLayout newTopToBottom
 		  spacing: 0;
 		  add: toolbar expand: false;
 		  add: (SpPanedLayout newTopToBottom
-				   positionOfSlider: 0.6;
+				   positionOfSlider: 0.4;
 				   add: issueList;
 				   add: detailsForm;
 				   yourself);
@@ -67,14 +67,16 @@ IssueTrackerPresenter >> deleteCurrentIssue [
 
 { #category : 'initialization' }
 IssueTrackerPresenter >> fieldChanged [
-	"Update the currently selected issue when fields change"
-	currentIssue ifNotNil: [ :issue |
-		issue title: detailsForm titleText.
-		issue description: detailsForm descriptionText.
-		issue status: detailsForm selectedStatus.
-		issue priority: detailsForm selectedPriority.
-		issue dueDate: detailsForm selectedDueDate.
-		self updateIssueList ]
+    "Update the currently selected issue when fields change"
+    currentIssue ifNotNil: [ :issue |
+        issue title: detailsForm titleText.
+        issue description: detailsForm descriptionText.
+        issue status: detailsForm selectedStatus.
+        issue priority: detailsForm selectedPriority.
+        issue startDate: detailsForm selectedStartDate.
+        issue duration: detailsForm selectedDuration.
+        issue dueDate: detailsForm selectedDueDate.
+        self updateIssueList ]
 ]
 
 { #category : 'initialization' }
@@ -101,9 +103,10 @@ IssueTrackerPresenter >> initializePresenters [
 
 { #category : 'initialization' }
 IssueTrackerPresenter >> initializeWindow: aWindowPresenter [
+
 	aWindowPresenter
 		title: 'Issue Tracker';
-		initialExtent: 800 @ 750
+		initialExtent: 800 @ 1000
 ]
 
 { #category : 'initialization' }

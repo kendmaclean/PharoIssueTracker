@@ -8,11 +8,66 @@ Class {
 		'status',
 		'priority',
 		'createdAt',
-		'dueDate'
+		'dueDate',
+		'startDate',
+		'duration',
+		'dependencies'
 	],
 	#category : 'IssueTracker',
 	#package : 'IssueTracker'
 }
+
+{ #category : 'initialization' }
+Issue >> addDependency: anIssue [
+    "Add a dependency - this issue depends on anIssue completing first"
+    (dependencies includes: anIssue) ifFalse: [
+        dependencies add: anIssue ]
+]
+
+{ #category : 'accessing' }
+Issue >> computedDueDate [
+    "Returns the due date, computing it if needed"
+    dueDate ifNotNil: [ ^ dueDate asDate ].
+    
+    "If no due date but have start date and duration, calculate forward"
+    (startDate notNil and: [ duration notNil ]) ifTrue: [
+        ^ startDate asDate addDays: duration ].
+    
+    ^ nil
+]
+
+{ #category : 'accessing' }
+Issue >> computedDuration [
+    | start end |
+    "Returns the duration in days"
+    duration ifNotNil: [ ^ duration ].
+    
+    "Calculate from dates if available"
+
+    start := self computedStartDate.
+    end := self computedDueDate.
+    
+    (start notNil and: [ end notNil ]) ifTrue: [
+        ^ end asDate julianDayNumber - start asDate julianDayNumber ].
+    
+    ^ 1  "Default duration"
+]
+
+{ #category : 'accessing' }
+Issue >> computedStartDate [
+    "Returns the start date, computing it if needed"
+    startDate ifNotNil: [ ^ startDate asDate ].
+    
+    "If no start date but have due date and duration, calculate backwards"
+    (dueDate notNil and: [ duration notNil ]) ifTrue: [
+        ^ dueDate asDate subtractDays: duration ].
+    
+    "Default to creation date"
+    createdAt ifNotNil: [ ^ createdAt asDate ].
+    
+    "Fallback to today"
+    ^ Date today
+]
 
 { #category : 'initialization' }
 Issue >> createdAt [
@@ -23,6 +78,18 @@ Issue >> createdAt [
 Issue >> createdAt: anObject [
 
 	createdAt := anObject
+]
+
+{ #category : 'accessing' }
+Issue >> dependencies [
+
+	^ dependencies
+]
+
+{ #category : 'accessing' }
+Issue >> dependencies: anObject [
+
+	dependencies := anObject
 ]
 
 { #category : 'accessing' }
@@ -76,6 +143,23 @@ Issue >> dueDate: aDate [
 ]
 
 { #category : 'accessing' }
+Issue >> duration [
+
+	^ duration
+]
+
+{ #category : 'accessing' }
+Issue >> duration: anObject [
+
+	duration := anObject
+]
+
+{ #category : 'initialization' }
+Issue >> hasDependencies [
+    ^ dependencies notEmpty
+]
+
+{ #category : 'accessing' }
 Issue >> id [
 
 	^ id
@@ -93,7 +177,8 @@ Issue >> initialize [
     id := UUID new asString.
     createdAt := DateAndTime now.
     status := #open.
-    priority := #medium
+    priority := #medium.
+    dependencies := OrderedCollection new
 ]
 
 { #category : 'accessing' }
@@ -106,6 +191,23 @@ Issue >> priority [
 Issue >> priority: anObject [
 
 	priority := anObject
+]
+
+{ #category : 'initialization' }
+Issue >> removeDependency: anIssue [
+    dependencies remove: anIssue ifAbsent: []
+]
+
+{ #category : 'accessing' }
+Issue >> startDate [
+
+	^ startDate
+]
+
+{ #category : 'accessing' }
+Issue >> startDate: anObject [
+
+	startDate := anObject
 ]
 
 { #category : 'accessing' }

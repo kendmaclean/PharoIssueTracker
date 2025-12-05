@@ -7,73 +7,210 @@ Class {
 		'priorityDropdown',
 		'statusDropdown',
 		'dueDateInput',
+		'startDateInput',
+		'durationInput',
 		'addButton',
 		'deleteButton',
-		'isLoadingIssue'
+		'isLoadingIssue',
+		'lastChangedField',
+		'dependenciesList',
+		'addDependencyButton',
+		'removeDependencyButton'
 	],
 	#category : 'IssueTracker',
 	#package : 'IssueTracker'
 }
 
 { #category : 'initialization' }
+IssueDetailsPresenter >> addDependency [
+    | allIssues currentIssue selectedIssue |
+    currentIssue := self owner currentIssue.
+    currentIssue ifNil: [ ^ self inform: 'Please select an issue first' ].
+    
+    allIssues := IssueRepository uniqueInstance allIssues 
+        reject: [ :i | i = currentIssue or: [ currentIssue dependencies includes: i ] ].
+    
+    allIssues ifEmpty: [ ^ self inform: 'No available issues to add as dependencies' ].
+    
+    "Use UIManager for simple selection"
+    selectedIssue := UIManager default 
+        chooseFrom: (allIssues collect: #title)
+        values: allIssues
+        title: 'Select issue this depends on:'.
+    
+    selectedIssue ifNotNil: [
+        currentIssue addDependency: selectedIssue.
+        dependenciesList items: currentIssue dependencies.
+        self owner issueListChanged ]
+]
+
+{ #category : 'initialization' }
+IssueDetailsPresenter >> autoCalculateDates [
+    "Auto-calculate the appropriate field based on what was last changed"
+    | startDate duration dueDate |
+    
+    isLoadingIssue ifTrue: [ ^ self ].
+    
+    startDate := startDateInput date.
+    duration := self selectedDuration.
+    dueDate := dueDateInput date.
+    
+    "Determine what to calculate based on last changed field"
+    lastChangedField = #startDate ifTrue: [
+        "Start date changed: calculate due date if we have duration"
+        (startDate notNil and: [ duration notNil and: [ duration > 0 ] ]) ifTrue: [
+            isLoadingIssue := true.
+            dueDateInput date: (startDate asDate addDays: duration).
+            self markAsAutoCalculated: dueDateInput.
+            isLoadingIssue := false.
+            ^ self onFieldChanged ] ].
+    
+    lastChangedField = #duration ifTrue: [
+        "Duration changed: prefer calculating due date from start, but if no start, calculate start from due"
+        (startDate notNil and: [ duration notNil and: [ duration > 0 ] ]) ifTrue: [
+            isLoadingIssue := true.
+            dueDateInput date: (startDate asDate addDays: duration).
+            self markAsAutoCalculated: dueDateInput.
+            isLoadingIssue := false.
+            ^ self onFieldChanged ].
+        
+        (dueDate notNil and: [ duration notNil and: [ duration > 0 ] ]) ifTrue: [
+            isLoadingIssue := true.
+            startDateInput date: (dueDate asDate subtractDays: duration).
+            self markAsAutoCalculated: startDateInput.
+            isLoadingIssue := false.
+            ^ self onFieldChanged ] ].
+    
+    lastChangedField = #dueDate ifTrue: [
+        "Due date changed: calculate start date if we have duration, or duration if we have start"
+        (dueDate notNil and: [ duration notNil and: [ duration > 0 ] ]) ifTrue: [
+            isLoadingIssue := true.
+            startDateInput date: (dueDate asDate subtractDays: duration).
+            self markAsAutoCalculated: startDateInput.
+            isLoadingIssue := false.
+            ^ self onFieldChanged ].
+        
+        (dueDate notNil and: [ startDate notNil ]) ifTrue: [
+            | calculatedDuration |
+            calculatedDuration := dueDate asDate julianDayNumber - startDate asDate julianDayNumber.
+            calculatedDuration := calculatedDuration max: 0.
+            isLoadingIssue := true.
+            durationInput text: calculatedDuration asString.
+            self markAsAutoCalculatedText: durationInput.
+            isLoadingIssue := false.
+            ^ self onFieldChanged ] ].
+    
+    "Clear markers if we can't calculate anything"
+    self clearAutoCalculatedMarkers.
+    self onFieldChanged
+]
+
+{ #category : 'initialization' }
+IssueDetailsPresenter >> clearAutoCalculatedMarkers [
+    "Clear all auto-calculated visual markers"
+    startDateInput withAdapterDo: [ :adapterWidget |
+        adapterWidget widget 
+            borderWidth: 1;
+            borderColor: Color gray ].
+    dueDateInput withAdapterDo: [ :adapterWidget |
+        adapterWidget widget 
+            borderWidth: 1;
+            borderColor: Color gray ].
+    durationInput withAdapterDo: [ :adapterWidget |
+        adapterWidget widget 
+            borderWidth: 1;
+            borderColor: Color gray ]
+]
+
+{ #category : 'initialization' }
 IssueDetailsPresenter >> clearForm [
-	titleInput text: ''.
-	descriptionInput text: ''.
-	dueDateInput date: nil.
-	priorityDropdown selectIndex: 2.
-	statusDropdown selectIndex: 1.
-	self updateButtonStates
+    titleInput text: ''.
+    descriptionInput text: ''.
+    startDateInput date: Date today.
+    durationInput text: ''.
+    dueDateInput date: nil.
+    priorityDropdown selectIndex: 2.
+    statusDropdown selectIndex: 1.
+    lastChangedField := nil.
+    self clearAutoCalculatedMarkers.
+    self updateButtonStates
 ]
 
 { #category : 'initialization' }
 IssueDetailsPresenter >> createNewIssue [
-	| issue |
-	titleInput text ifEmpty: [
-		self inform: 'Please enter a title'.
-		^ self ].
-	
-	issue := Issue new
-		title: titleInput text;
-		description: descriptionInput text;
-		priority: priorityDropdown selectedItem;
-		status: statusDropdown selectedItem;
-		dueDate: dueDateInput date;
-		yourself.
-	
-	IssueRepository uniqueInstance addIssue: issue.
-	
-	self clearForm.
-	self owner issueListChanged
+    | issue startDate dueDate duration |
+    
+    titleInput text ifEmpty: [
+        self inform: 'Please enter a title'.
+        ^ self ].
+    
+    "Get values, handling nil properly"
+    startDate := startDateInput date.
+    dueDate := dueDateInput date.
+    duration := self selectedDuration.
+    
+    issue := Issue new
+        title: titleInput text;
+        description: descriptionInput text;
+        priority: priorityDropdown selectedItem;
+        status: statusDropdown selectedItem;
+        yourself.
+    
+    "Only set non-nil values"
+    startDate ifNotNil: [ issue startDate: startDate ].
+    duration ifNotNil: [ issue duration: duration ].
+    dueDate ifNotNil: [ issue dueDate: dueDate ].
+    
+    IssueRepository uniqueInstance addIssue: issue.
+    
+    self clearForm.
+    self owner issueListChanged
 ]
 
 { #category : 'initialization' }
 IssueDetailsPresenter >> defaultLayout [
+
 	^ SpBoxLayout newTopToBottom
-		spacing: 8;
-		add: 'Issue Details' expand: false;
-		add: (SpBoxLayout newLeftToRight
-			add: 'Title:' width: 80;
-			add: titleInput;
-			yourself)
-		expand: false;
-		add: (SpBoxLayout newLeftToRight
-			add: 'Priority:' width: 80;
-			add: priorityDropdown width: 120;
-			add: 'Status:' width: 80;
-			add: statusDropdown width: 120;
-			add: 'Due Date:' width: 80;
-			add: dueDateInput;
-			yourself)
-		expand: false;
-		add: 'Description:' expand: false;
-		add: descriptionInput height: 100;
-		add: (SpBoxLayout newLeftToRight
-			spacing: 5;
-			add: addButton;
-			add: deleteButton;
-			yourself)
-		expand: false;
-		yourself
+		  spacing: 8;
+		  add: 'Issue Details' expand: false;
+		  add: (SpBoxLayout newLeftToRight
+				   add: 'Title:' width: 80;
+				   add: titleInput;
+				   yourself)
+		  expand: false;
+		  add: (SpBoxLayout newLeftToRight
+				   add: 'Priority:' width: 80;
+				   add: priorityDropdown width: 120;
+				   add: 'Status:' width: 80;
+				   add: statusDropdown width: 120;
+				   yourself)
+		  expand: false;
+		  add: (SpBoxLayout newLeftToRight
+				   add: 'Start Date:' width: 80;
+				   add: startDateInput;
+				   add: 'Duration:' width: 80;
+				   add: durationInput width: 100;
+				   add: 'Due Date:' width: 80;
+				   add: dueDateInput;
+				   yourself)
+		  expand: false;
+		  add: 'Description:' expand: false;
+		  add: descriptionInput height: 80;
+		  add: 'Dependencies (this issue depends on):' expand: false;
+		  add: dependenciesList height: 125;
+		  add: (SpBoxLayout newLeftToRight
+				   spacing: 5;
+				   add: addDependencyButton;
+				   add: removeDependencyButton;
+				   yourself)
+		  expand: false;
+		  add: (SpBoxLayout newLeftToRight
+				   spacing: 5;
+				   add: addButton;
+				   add: deleteButton;
+				   yourself)
+		  expand: false;
+		  yourself
 ]
 
 { #category : 'initialization' }
@@ -93,63 +230,136 @@ IssueDetailsPresenter >> hasCurrentIssue [
 
 { #category : 'initialization' }
 IssueDetailsPresenter >> initializePresenters [
+
 	isLoadingIssue := false.
-	
+	lastChangedField := nil.
+
 	"Title"
 	titleInput := self newTextInput
-		placeholder: 'Issue title...';
-		yourself.
+		              placeholder: 'Issue title...';
+		              yourself.
 	titleInput whenTextChangedDo: [ self onFieldChanged ].
-	
+
 	"Description"
 	descriptionInput := self newText
-		placeholder: 'Description...';
-		yourself.
+		                    placeholder: 'Description...';
+		                    yourself.
 	descriptionInput whenTextChangedDo: [ self onFieldChanged ].
-	
+
+	"Start Date - default to today"
+	startDateInput := self instantiate: SpDatePresenter.
+	startDateInput date: Date today.
+	startDateInput whenDateChanged: [
+		lastChangedField := #startDate.
+		self autoCalculateDates ].
+
+	"Duration (in days) - use text input instead"
+	durationInput := self newTextInput
+		                 placeholder: 'Days';
+		                 yourself.
+	durationInput whenTextChangedDo: [
+		lastChangedField := #duration.
+		self autoCalculateDates ].
+
 	"Due Date"
 	dueDateInput := self instantiate: SpDatePresenter.
-	dueDateInput whenDateChanged: [ self onFieldChanged ].
-	
+	dueDateInput whenDateChanged: [
+		lastChangedField := #dueDate.
+		self autoCalculateDates ].
+
 	"Priority"
 	priorityDropdown := self newDropList
-		items: #( low medium high critical );
-		selectIndex: 2;
-		yourself.
+		                    items: #( low medium high critical );
+		                    selectIndex: 2;
+		                    yourself.
 	priorityDropdown whenSelectedItemChangedDo: [ self onFieldChanged ].
-	
+
 	"Status"
 	statusDropdown := self newDropList
-		items: #( open inProgress resolved closed );
-		selectIndex: 1;
-		yourself.
+		                  items: #( open inProgress resolved closed );
+		                  selectIndex: 1;
+		                  yourself.
 	statusDropdown whenSelectedItemChangedDo: [ self onFieldChanged ].
-	
+
+	"Dependencies list - with activation enabled for selection"
+	dependenciesList := self newList
+		                    display: [ :issue | issue title ];
+		                    activateOnSingleClick;
+		                    yourself.
+
+	"Add dependency button"
+	addDependencyButton := self newButton
+		                       label: 'Add Dependency';
+		                       icon: (self iconNamed: #link);
+		                       action: [ self addDependency ];
+		                       yourself.
+
+	"Remove dependency button"
+	removeDependencyButton := self newButton
+		                          label: 'Remove';
+		                          icon: (self iconNamed: #delete);
+		                          action: [ self removeDependency ];
+		                          yourself.
+
 	"Action buttons"
 	addButton := self newButton
-		label: 'Create New Issue';
-		icon: (self iconNamed: #add);
-		action: [ self createNewIssue ];
-		yourself.
-		
+		             label: 'Create New Issue';
+		             icon: (self iconNamed: #add);
+		             action: [ self createNewIssue ];
+		             yourself.
+
 	deleteButton := self newButton
-		label: 'Delete Issue';
-		icon: (self iconNamed: #delete);
-		action: [ self deleteIssue ];
-		yourself
+		                label: 'Delete Issue';
+		                icon: (self iconNamed: #delete);
+		                action: [ self deleteIssue ];
+		                yourself
+]
+
+{ #category : 'initialization' }
+IssueDetailsPresenter >> loadDependencies: anIssue [
+    anIssue ifNil: [ 
+        dependenciesList items: #().
+        ^ self ].
+    
+    dependenciesList items: anIssue dependencies
 ]
 
 { #category : 'initialization' }
 IssueDetailsPresenter >> loadIssue: anIssue [
-	isLoadingIssue := true.
-	anIssue ifNotNil: [
-		titleInput text: anIssue title.
-		descriptionInput text: (anIssue description ifNil: [ '' ]).
-		statusDropdown selectItem: anIssue status.
-		priorityDropdown selectItem: anIssue priority.
-		dueDateInput date: anIssue dueDate ].
-	isLoadingIssue := false.
-	self updateButtonStates
+    isLoadingIssue := true.
+    lastChangedField := nil.
+    anIssue ifNotNil: [
+        titleInput text: anIssue title.
+        descriptionInput text: (anIssue description ifNil: [ '' ]).
+        statusDropdown selectItem: anIssue status.
+        priorityDropdown selectItem: anIssue priority.
+        startDateInput date: anIssue startDate.
+        durationInput text: (anIssue duration 
+            ifNil: [ '' ] 
+            ifNotNil: [ :d | d asString ]).
+        dueDateInput date: anIssue dueDate.
+        self loadDependencies: anIssue ].
+    self clearAutoCalculatedMarkers.
+    isLoadingIssue := false.
+    self updateButtonStates
+]
+
+{ #category : 'initialization' }
+IssueDetailsPresenter >> markAsAutoCalculated: aDatePresenter [
+    "Mark a date presenter as auto-calculated with a green border"
+    aDatePresenter withAdapterDo: [ :adapterWidget |
+        adapterWidget widget 
+            borderWidth: 2;
+            borderColor: (Color green alpha: 0.6) ]
+]
+
+{ #category : 'initialization' }
+IssueDetailsPresenter >> markAsAutoCalculatedText: aTextInput [
+    "Mark a text input as auto-calculated with a green border"
+    aTextInput withAdapterDo: [ :adapterWidget |
+        adapterWidget widget 
+            borderWidth: 2;
+            borderColor: (Color green alpha: 0.6) ]
 ]
 
 { #category : 'initialization' }
@@ -160,13 +370,43 @@ IssueDetailsPresenter >> onFieldChanged [
 ]
 
 { #category : 'initialization' }
+IssueDetailsPresenter >> removeDependency [
+    | currentIssue selectedDep |
+    currentIssue := self owner currentIssue.
+    currentIssue ifNil: [ ^ self ].
+    
+    "Try to get the selected item"
+    selectedDep := dependenciesList selection selectedItem.
+    
+    selectedDep ifNil: [ 
+        ^ self inform: 'Please select a dependency to remove' ].
+    
+    currentIssue removeDependency: selectedDep.
+    dependenciesList items: currentIssue dependencies.
+    self owner issueListChanged
+]
+
+{ #category : 'initialization' }
 IssueDetailsPresenter >> selectedDueDate [
 	^ dueDateInput date
 ]
 
 { #category : 'initialization' }
+IssueDetailsPresenter >> selectedDuration [
+    | text |
+    text := durationInput text trimBoth.
+    text ifEmpty: [ ^ nil ].
+    ^ [ text asNumber ] on: Error do: [ nil ]
+]
+
+{ #category : 'initialization' }
 IssueDetailsPresenter >> selectedPriority [
 	^ priorityDropdown selectedItem
+]
+
+{ #category : 'initialization' }
+IssueDetailsPresenter >> selectedStartDate [
+    ^ startDateInput date
 ]
 
 { #category : 'initialization' }

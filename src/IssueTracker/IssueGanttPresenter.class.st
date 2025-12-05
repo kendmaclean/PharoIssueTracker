@@ -111,41 +111,79 @@ IssueGanttPresenter >> addDateAxis: aCanvas from: startDate to: endDate count: i
 ]
 
 { #category : 'initialization' }
+IssueGanttPresenter >> addDependencyArrows: rsCanvas issues: issues shapeMap: issueShapeMap [
+    "Draw arrows from dependencies to dependent issues"
+    | arrows |
+    arrows := OrderedCollection new.
+    
+    issues do: [ :issue |
+        | toShape |
+        toShape := issueShapeMap at: issue ifAbsent: [ nil ].
+        
+        issue dependencies do: [ :dependency |
+            | fromShape line |
+            fromShape := issueShapeMap at: dependency ifAbsent: [ nil ].
+            
+            (fromShape notNil and: [ toShape notNil ]) ifTrue: [
+                "Create arrow from end of dependency to start of dependent issue"
+                line := RSLine new
+                    from: fromShape;
+                    to: toShape;
+                    color: (Color blue alpha: 0.5);
+                    width: 2;
+                    yourself.
+                
+                "Add arrowhead"
+                line markerEnd: (RSShapeFactory arrow
+                    color: (Color blue alpha: 0.5);
+                    size: 8).
+                
+                arrows add: line ] ] ].
+    
+    rsCanvas addAll: arrows.
+    
+    "Move arrows behind bars"
+    arrows do: [ :arrow | arrow pushBack ]
+]
+
+{ #category : 'initialization' }
 IssueGanttPresenter >> buildGanttChart [
     canvas script: [ :rsCanvas | self buildGanttOn: rsCanvas ]
 ]
 
 { #category : 'initialization' }
 IssueGanttPresenter >> buildGanttOn: rsCanvas [
-    | issues shapes baselineDate maxDate daySpan leftMargin |
+    | issues shapes baselineDate maxDate daySpan leftMargin issueShapeMap |
     
+    "Filter issues that have either a due date or can compute one"
     issues := IssueRepository uniqueInstance allIssues 
-        select: [ :issue | issue dueDate notNil ].
+        select: [ :issue | 
+            issue computedDueDate notNil and: [ issue computedStartDate notNil ] ].
     
     issues ifEmpty: [ 
         ^ self showEmptyMessageOn: rsCanvas ].
     
-    "Use today as baseline, or earliest creation date"
-    baselineDate := Date today.
-    maxDate := (issues collect: [ :i | i dueDate asDate ]) max.
+    "Use earliest start date as baseline"
+    baselineDate := (issues collect: #computedStartDate) min.
+    maxDate := (issues collect: #computedDueDate) max.
     daySpan := (maxDate julianDayNumber - baselineDate julianDayNumber) max: 1.
     
-    leftMargin := 100.  "Space for labels on the left"
+    leftMargin := 100.
     
     shapes := OrderedCollection new.
+    issueShapeMap := Dictionary new.  "Map issues to their shapes for dependency drawing"
     
     "Create bars for each issue"
     issues withIndexDo: [ :issue :index |
-        | bar width label composite daysUntilDue startX |
+        | bar width label composite startDays endDays startX |
         
-        "Calculate days from baseline to due date"
-        daysUntilDue := issue dueDate asDate julianDayNumber - baselineDate julianDayNumber.
+        "Calculate days from baseline"
+        startDays := issue computedStartDate julianDayNumber - baselineDate julianDayNumber.
+        endDays := issue computedDueDate julianDayNumber - baselineDate julianDayNumber.
         
-        "Width represents days until due"
-        width := (daysUntilDue max: 1) * 20.
-        
-        "Start position - all bars start at leftMargin"
-        startX := leftMargin.
+        "Calculate position and width"
+        startX := leftMargin + (startDays * 20).
+        width := ((endDays - startDays) max: 1) * 20.
         
         "Create bar - position it at the left edge (not centered)"
         bar := RSBox new
@@ -155,8 +193,8 @@ IssueGanttPresenter >> buildGanttOn: rsCanvas [
             model: issue;
             yourself.
         
-        "Position bar relative to its top-left corner"
-        bar translateBy: (width / 2) @ 0.  "Roassal positions from center, so offset"
+        "Position bar relative to its center"
+        bar translateBy: (width / 2) @ 0.
         
         "Create label"
         label := RSLabel new
@@ -173,26 +211,31 @@ IssueGanttPresenter >> buildGanttOn: rsCanvas [
             model: issue;
             yourself.
         
-        "Position composite - all at same X (leftMargin)"
+        "Position composite"
         composite translateBy: startX @ (index * 35).
         shapes add: composite.
         
+        "Store shape for dependency drawing"
+        issueShapeMap at: issue put: bar.
+        
         "Add tooltip to bar only"
         bar @ (RSPopup text: [ :i | 
-            i title, String cr, 
+            i title, String cr,
             'Status: ', i status asString, String cr,
             'Priority: ', i priority asString, String cr,
-            'Created: ', i createdAt asDate asString, String cr,
-            'Due: ', i dueDate asDate asString ]) ].
+            'Start: ', i computedStartDate asString, String cr,
+            'Due: ', i computedDueDate asString, String cr,
+            'Duration: ', i computedDuration asString, ' days' ]) ].
     
     rsCanvas addAll: shapes.
+    
+    "Draw dependency arrows"
+    self addDependencyArrows: rsCanvas issues: issues shapeMap: issueShapeMap.
     
     "Add date axis"
     self addDateAxis: rsCanvas from: baselineDate to: maxDate count: issues size leftMargin: leftMargin.
     
-    "Don't auto-scale, keep actual positions"
     rsCanvas @ RSCanvasController.
-    
     ^ rsCanvas
 ]
 
