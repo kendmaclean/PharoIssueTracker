@@ -97,7 +97,7 @@ IssueTrackerPresenter >> initializeWindow: aWindowPresenter [
 
 	aWindowPresenter
 		title: 'Issue Tracker';
-		initialExtent: 800 @ 1000
+		initialExtent: 800 @ 600
 ]
 
 { #category : 'initialization' }

@@ -198,16 +198,16 @@ IssueDetailsPresenter >> clearAutoCalculatedMarkers [
 
 { #category : 'initialization' }
 IssueDetailsPresenter >> clearForm [
-    titleInput text: ''.
-    descriptionInput text: ''.
-    startDateInput date: Date today.
-    durationInput text: ''.
-    dueDateInput date: nil.
-    priorityDropdown selectIndex: 2.
-    statusDropdown selectIndex: 1.
-    lastChangedField := nil.
-    self clearAutoCalculatedMarkers.
-    self updateButtonStates
+	titleInput text: ''.
+	descriptionInput text: ''.
+	startDateInput date: Date today.
+	durationInput text: ''.
+	dueDateInput date: nil.
+	priorityDropdown selectIndex: 2.
+	statusDropdown selectIndex: 1.
+	lastChangedField := nil.
+	self clearAutoCalculatedMarkers.
+	self updateButtonStates
 ]
 
 { #category : 'initialization' }
@@ -243,7 +243,35 @@ IssueDetailsPresenter >> createNewIssue [
 
 { #category : 'initialization' }
 IssueDetailsPresenter >> defaultLayout [
-    ^ self buildLayoutWithDependencies: false
+	^ SpBoxLayout newTopToBottom
+		spacing: 8;
+		add: 'Issue Details' expand: false;
+		add: (SpBoxLayout newLeftToRight
+			add: 'Title:' width: 80;
+			add: titleInput;
+			yourself) expand: false;
+		add: (SpBoxLayout newLeftToRight
+			add: 'Priority:' width: 80;
+			add: priorityDropdown width: 120;
+			add: 'Status:' width: 80;
+			add: statusDropdown width: 120;
+			yourself) expand: false;
+		add: (SpBoxLayout newLeftToRight
+			add: 'Start Date:' width: 80;
+			add: startDateInput;
+			add: 'Duration:' width: 80;
+			add: durationInput width: 100;
+			add: 'Due Date:' width: 80;
+			add: dueDateInput;
+			yourself) expand: false;
+		add: 'Description:' expand: false;
+		add: descriptionInput height: 80;
+		add: (SpBoxLayout newLeftToRight
+			spacing: 5;
+			add: addButton;
+			add: deleteButton;
+			yourself) expand: false;
+		yourself
 ]
 
 { #category : 'initialization' }
@@ -305,36 +333,7 @@ IssueDetailsPresenter >> initializePresenters [
 		                  selectIndex: 1;
 		                  yourself.
 	statusDropdown whenSelectedItemChangedDo: [ self onFieldChanged ].
-	"Dependencies table with title column only"
-	dependenciesList := self newTable.
-	dependenciesList 
-		addColumn: ((SpStringTableColumn 
-			title: 'Dependency' 
-			evaluated: [ :issue | issue title ]) yourself);
-		beResizable.
 	
-	"Add context menu for deletion"
-	dependenciesList contextMenu: [ 
-		self newMenu 
-			addItem: [ :item |
-				item 
-					name: 'Remove dependency';
-					icon: (self iconNamed: #delete);
-					action: [ self removeDependencySelected ] ];
-			yourself ].
-	
-	"Add dependency button"
-	addDependencyButton := self newButton
-		                       label: 'Add Dependency';
-		                       icon: (self iconNamed: #link);
-		                       action: [ self addDependency ];
-		                       yourself.
-	"Remove dependency button"
-	removeDependencyButton := self newButton
-		                          label: 'Remove Selected';
-		                          icon: (self iconNamed: #delete);
-		                          action: [ self removeDependencySelected ];
-		                          yourself.
 	"Action buttons"
 	addButton := self newButton
 		             label: 'Create New Issue';
@@ -361,22 +360,21 @@ IssueDetailsPresenter >> loadDependencies: anIssue [
 
 { #category : 'initialization' }
 IssueDetailsPresenter >> loadIssue: anIssue [
-    isLoadingIssue := true.
-    lastChangedField := nil.
-    anIssue ifNotNil: [
-        titleInput text: anIssue title.
-        descriptionInput text: (anIssue description ifNil: [ '' ]).
-        statusDropdown selectItem: anIssue status.
-        priorityDropdown selectItem: anIssue priority.
-        startDateInput date: anIssue startDate.
-        durationInput text: (anIssue duration 
-            ifNil: [ '' ] 
-            ifNotNil: [ :d | d asString ]).
-        dueDateInput date: anIssue dueDate.
-        self loadDependencies: anIssue ].
-    self clearAutoCalculatedMarkers.
-    isLoadingIssue := false.
-    self updateButtonStates
+	isLoadingIssue := true.
+	lastChangedField := nil.
+	anIssue ifNotNil: [
+		titleInput text: anIssue title.
+		descriptionInput text: (anIssue description ifNil: [ '' ]).
+		statusDropdown selectItem: anIssue status.
+		priorityDropdown selectItem: anIssue priority.
+		startDateInput date: anIssue startDate.
+		durationInput text: (anIssue duration 
+			ifNil: [ '' ]
+			ifNotNil: [ :d | d asString ]).
+		dueDateInput date: anIssue dueDate ].
+	self clearAutoCalculatedMarkers.
+	isLoadingIssue := false.
+	self updateButtonStates
 ]
 
 { #category : 'initialization' }
@@ -402,6 +400,18 @@ IssueDetailsPresenter >> onFieldChanged [
 	"Notify owner when fields change"
 	isLoadingIssue ifTrue: [ ^ self ].
 	self owner fieldChanged
+]
+
+{ #category : 'initialization' }
+IssueDetailsPresenter >> openDependencyDialog [
+	| currentIssue |
+	currentIssue := self owner currentIssue.
+	currentIssue ifNil: [ 
+		^ self inform: 'Please select an issue first' ].
+	
+	IssueDependencyDialog openFor: currentIssue.
+	"Refresh after dialog closes"
+	self owner issueListChanged
 ]
 
 { #category : 'initialization' }

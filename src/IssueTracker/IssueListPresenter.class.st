@@ -35,6 +35,17 @@ IssueListPresenter >> initializePresenters [
 		compareFunction: [ :a :b | a title < b title ];
 		yourself).
 	
+	"Dependencies indicator column - clickable"
+	issueTable addColumn: ((SpStringTableColumn
+		title: 'Deps'
+		evaluated: [ :issue | 
+			issue hasDependencies 
+				ifTrue: [ '🔗 ', issue dependencies size asString ]
+				ifFalse: [ '-' ] ])
+		width: 60;
+		compareFunction: [ :a :b | a dependencies size < b dependencies size ];
+		yourself).
+	
 	"Status column"
 	issueTable addColumn: ((SpStringTableColumn
 		title: 'Status'
@@ -53,8 +64,31 @@ IssueListPresenter >> initializePresenters [
 		compareFunction: [ :a :b | a dueDate < b dueDate ];
 		yourself).
 	
+	"Select issue on single click"
 	issueTable whenSelectedDo: [ :issue | 
-		self owner onIssueSelected: issue ]
+		self owner onIssueSelected: issue ].
+	
+	"Add context menu for dependencies"
+	issueTable contextMenu: [ 
+		| selectedIssue contextMenu |
+		selectedIssue := issueTable selection selectedItem.
+		contextMenu := self newMenu.
+		selectedIssue ifNotNil: [
+			selectedIssue hasDependencies ifTrue: [
+				contextMenu addItem: [ :item |
+					item 
+						name: 'Manage Dependencies (', selectedIssue dependencies size asString, ')';
+						icon: (self iconNamed: #link);
+						action: [ IssueDependencyDialog openFor: selectedIssue.
+							self owner issueListChanged ] ] ] 
+			ifFalse: [
+				contextMenu addItem: [ :item |
+					item 
+						name: 'Add Dependencies';
+						icon: (self iconNamed: #link);
+						action: [ IssueDependencyDialog openFor: selectedIssue.
+							self owner issueListChanged ] ] ] ].
+		contextMenu ]
 ]
 
 { #category : 'initialization' }
