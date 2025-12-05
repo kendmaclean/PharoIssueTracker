@@ -23,29 +23,29 @@ Class {
 
 { #category : 'initialization' }
 IssueDetailsPresenter >> addDependency [
-    | allIssues currentIssue selectedIssue |
-    currentIssue := self owner currentIssue.
-    currentIssue ifNil: [ ^ self inform: 'Please select an issue first' ].
-    
-    allIssues := IssueRepository uniqueInstance allIssues 
-        reject: [ :i | i = currentIssue or: [ currentIssue dependencies includes: i ] ].
-    
-    allIssues ifEmpty: [ ^ self inform: 'No available issues to add as dependencies' ].
-    
-    "Use UIManager for simple selection"
-    selectedIssue := UIManager default 
-        chooseFrom: (allIssues collect: #title)
-        values: allIssues
-        title: 'Select issue this depends on:'.
-    
-    selectedIssue ifNotNil: [
-        [ currentIssue addDependency: selectedIssue.
-          dependenciesList items: currentIssue dependencies.
-          self updateDependenciesVisibility.
-          self owner issueListChanged ]
-        on: Error 
-        do: [ :ex | 
-            self inform: 'Cannot add dependency: ', ex messageText ] ]
+	| validCandidates currentIssue selectedIssue |
+	currentIssue := self owner currentIssue.
+	currentIssue ifNil: [ ^ self inform: 'Please select an issue first' ].
+
+	"Use the Handler to find valid candidates from the repository"
+	validCandidates := currentIssue dependencyHandler 
+		availableDependenciesIn: IssueRepository uniqueInstance allIssues.
+
+	validCandidates ifEmpty: [ ^ self inform: 'No available issues to add as dependencies' ].
+
+	selectedIssue := UIManager default 
+		chooseFrom: (validCandidates collect: #title)
+		values: validCandidates
+		title: 'Select issue this depends on:'.
+
+	selectedIssue ifNotNil: [
+		[ 
+		  currentIssue addDependency: selectedIssue.
+		  dependenciesList items: currentIssue dependencies.
+		  self updateDependenciesVisibility.
+		  self owner issueListChanged 
+		] on: Error do: [ :ex | self inform: ex messageText ] 
+	]
 ]
 
 { #category : 'initialization' }
@@ -111,8 +111,7 @@ IssueDetailsPresenter >> autoCalculateDates [
 
 { #category : 'initialization' }
 IssueDetailsPresenter >> buildLayoutWithDependencies: showDeps [
-
-	| boxLayout |
+	| boxLayout dependenciesSection |
 	boxLayout := SpBoxLayout newTopToBottom
 		             spacing: 8;
 		             add: 'Issue Details' expand: false;
@@ -141,24 +140,40 @@ IssueDetailsPresenter >> buildLayoutWithDependencies: showDeps [
 		             add: descriptionInput height: 80;
 		             yourself.
 
-	"Conditionally add dependencies section"
+	"Conditionally add dependencies section with buttons on the right"
 	showDeps ifTrue: [
+		dependenciesSection := SpBoxLayout newLeftToRight
+			spacing: 8;
+			add: (SpBoxLayout newTopToBottom
+				spacing: 4;
+				add: 'Dependencies (this issue depends on):' expand: false;
+				add: dependenciesList;
+				yourself);
+			add: (SpBoxLayout newTopToBottom
+				spacing: 5;
+				add: addDependencyButton expand: false;
+				add: removeDependencyButton expand: false;
+				addLast: '' "spacer";
+				yourself) width: 140;
+			yourself.
+		
+		boxLayout add: dependenciesSection height: 150 ].
+
+	"Add dependency buttons separately if no dependencies shown"
+	showDeps ifFalse: [
 		boxLayout
-			add: 'Dependencies (this issue depends on):' expand: false;
-			add: dependenciesList height: 125 ].
+			add: (SpBoxLayout newLeftToRight
+				spacing: 5;
+				add: addDependencyButton;
+				yourself)
+			expand: false ].
 
 	boxLayout
 		add: (SpBoxLayout newLeftToRight
-				 spacing: 5;
-				 add: addDependencyButton;
-				 add: removeDependencyButton;
-				 yourself)
-		expand: false;
-		add: (SpBoxLayout newLeftToRight
-				 spacing: 5;
-				 add: addButton;
-				 add: deleteButton;
-				 yourself)
+			spacing: 5;
+			add: addButton;
+			add: deleteButton;
+			yourself)
 		expand: false.
 
 	^ boxLayout
@@ -248,29 +263,24 @@ IssueDetailsPresenter >> hasCurrentIssue [
 
 { #category : 'initialization' }
 IssueDetailsPresenter >> initializePresenters [
-
 	isLoadingIssue := false.
 	lastChangedField := nil.
-
 	"Title"
 	titleInput := self newTextInput
 		              placeholder: 'Issue title...';
 		              yourself.
 	titleInput whenTextChangedDo: [ self onFieldChanged ].
-
 	"Description"
 	descriptionInput := self newText
 		                    placeholder: 'Description...';
 		                    yourself.
 	descriptionInput whenTextChangedDo: [ self onFieldChanged ].
-
 	"Start Date - default to today"
 	startDateInput := self instantiate: SpDatePresenter.
 	startDateInput date: Date today.
 	startDateInput whenDateChanged: [
 		lastChangedField := #startDate.
 		self autoCalculateDates ].
-
 	"Duration (in days) - use text input instead"
 	durationInput := self newTextInput
 		                 placeholder: 'Days';
@@ -278,54 +288,59 @@ IssueDetailsPresenter >> initializePresenters [
 	durationInput whenTextChangedDo: [
 		lastChangedField := #duration.
 		self autoCalculateDates ].
-
 	"Due Date"
 	dueDateInput := self instantiate: SpDatePresenter.
 	dueDateInput whenDateChanged: [
 		lastChangedField := #dueDate.
 		self autoCalculateDates ].
-
 	"Priority"
 	priorityDropdown := self newDropList
 		                    items: #( low medium high critical );
 		                    selectIndex: 2;
 		                    yourself.
 	priorityDropdown whenSelectedItemChangedDo: [ self onFieldChanged ].
-
 	"Status"
 	statusDropdown := self newDropList
 		                  items: #( open inProgress resolved closed );
 		                  selectIndex: 1;
 		                  yourself.
 	statusDropdown whenSelectedItemChangedDo: [ self onFieldChanged ].
-
-	"Dependencies list - with activation enabled for selection"
-	dependenciesList := self newList
-		                    display: [ :issue | issue title ];
-		                    activateOnSingleClick;
-		                    yourself.
-
+	"Dependencies table with title column only"
+	dependenciesList := self newTable.
+	dependenciesList 
+		addColumn: ((SpStringTableColumn 
+			title: 'Dependency' 
+			evaluated: [ :issue | issue title ]) yourself);
+		beResizable.
+	
+	"Add context menu for deletion"
+	dependenciesList contextMenu: [ 
+		self newMenu 
+			addItem: [ :item |
+				item 
+					name: 'Remove dependency';
+					icon: (self iconNamed: #delete);
+					action: [ self removeDependencySelected ] ];
+			yourself ].
+	
 	"Add dependency button"
 	addDependencyButton := self newButton
 		                       label: 'Add Dependency';
 		                       icon: (self iconNamed: #link);
 		                       action: [ self addDependency ];
 		                       yourself.
-
 	"Remove dependency button"
 	removeDependencyButton := self newButton
-		                          label: 'Remove';
+		                          label: 'Remove Selected';
 		                          icon: (self iconNamed: #delete);
-		                          action: [ self removeDependency ];
+		                          action: [ self removeDependencySelected ];
 		                          yourself.
-
 	"Action buttons"
 	addButton := self newButton
 		             label: 'Create New Issue';
 		             icon: (self iconNamed: #add);
 		             action: [ self createNewIssue ];
 		             yourself.
-
 	deleteButton := self newButton
 		                label: 'Delete Issue';
 		                icon: (self iconNamed: #delete);
@@ -391,20 +406,47 @@ IssueDetailsPresenter >> onFieldChanged [
 
 { #category : 'initialization' }
 IssueDetailsPresenter >> removeDependency [
-    | currentIssue selectedDep |
-    currentIssue := self owner currentIssue.
-    currentIssue ifNil: [ ^ self ].
-    
-    "Try to get the selected item"
-    selectedDep := dependenciesList selection selectedItem.
-    
-    selectedDep ifNil: [ 
-        ^ self inform: 'Please select a dependency to remove' ].
-    
-    currentIssue removeDependency: selectedDep.
-    dependenciesList items: currentIssue dependencies.
-    self updateDependenciesVisibility.
-    self owner issueListChanged
+	"Remove selected dependency (kept for backward compatibility)"
+	| currentIssue selectedDep |
+	currentIssue := self owner currentIssue.
+	currentIssue ifNil: [ ^ self ].
+	
+	"Try to get the selected item from table"
+	selectedDep := dependenciesList selection selectedItem.
+	
+	selectedDep ifNil: [ 
+		^ self inform: 'Please select a dependency to remove' ].
+	
+	self removeDependencyDirect: selectedDep
+]
+
+{ #category : 'initialization' }
+IssueDetailsPresenter >> removeDependencyDirect: aDependency [
+	"Remove a dependency directly"
+	| currentIssue |
+	currentIssue := self owner currentIssue.
+	currentIssue ifNil: [ ^ self ].
+	
+	currentIssue removeDependency: aDependency.
+	dependenciesList items: currentIssue dependencies.
+	self updateDependenciesVisibility.
+	self owner issueListChanged
+]
+
+{ #category : 'initialization' }
+IssueDetailsPresenter >> removeDependencySelected [
+	"Remove selected dependency from table"
+	| currentIssue selectedDep |
+	currentIssue := self owner currentIssue.
+	currentIssue ifNil: [ ^ self ].
+	
+	"Try to get the selected item from table"
+	selectedDep := dependenciesList selection selectedItem.
+	
+	selectedDep ifNil: [ 
+		^ self inform: 'Please select a dependency to remove' ].
+	
+	self removeDependencyDirect: selectedDep
 ]
 
 { #category : 'initialization' }
