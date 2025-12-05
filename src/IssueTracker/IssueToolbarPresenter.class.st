@@ -110,7 +110,8 @@ IssueToolbarPresenter >> onShowAll [
 
 { #category : 'initialization' }
 IssueToolbarPresenter >> onShowChart [
-	self owner showChart
+
+	IssueChartPresenter open
 ]
 
 { #category : 'initialization' }

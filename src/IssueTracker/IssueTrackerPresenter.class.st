@@ -26,15 +26,6 @@ IssueTrackerPresenter class >> open [
 ]
 
 { #category : 'initialization' }
-IssueTrackerPresenter >> colorForStatus: aStatus [
-	aStatus = #open ifTrue: [ ^ Color cyan ].
-	aStatus = #inProgress ifTrue: [ ^ Color orange ].
-	aStatus = #resolved ifTrue: [ ^ Color green ].
-	aStatus = #closed ifTrue: [ ^ Color gray ].
-	^ Color black
-]
-
-{ #category : 'initialization' }
 IssueTrackerPresenter >> currentIssue [
     ^ currentIssue
 ]
@@ -119,47 +110,6 @@ IssueTrackerPresenter >> issueListChanged [
 IssueTrackerPresenter >> onIssueSelected: anIssue [
 	currentIssue := anIssue.
 	detailsForm loadIssue: anIssue
-]
-
-{ #category : 'initialization' }
-IssueTrackerPresenter >> showChart [
-	| canvas statusCounts bars maxCount |
-	issues ifEmpty: [
-		self inform: 'No issues to display'.
-		^ self ].
-	
-	canvas := RSCanvas new.
-	
-	statusCounts := Dictionary new.
-	#(open inProgress resolved closed) do: [ :status |
-		statusCounts at: status put: (issues count: [ :i | i status = status ]) ].
-	
-	maxCount := statusCounts values max max: 1.
-	
-	bars := statusCounts associations collect: [ :assoc |
-		| bar label |
-		bar := RSBox new
-			width: 100;
-			height: (assoc value / maxCount * 250 max: 10);
-			color: (self colorForStatus: assoc key);
-			model: assoc;
-			yourself.
-		
-		label := RSLabel new
-			text: assoc key asString, String cr, assoc value asString;
-			fontSize: 12;
-			bold;
-			yourself.
-		
-		RSComposite new
-			shapes: { bar. label };
-			yourself ].
-	
-	canvas addAll: bars.
-	RSHorizontalLineLayout new gapSize: 20; on: bars.
-	canvas @ RSCanvasController.
-	
-	canvas open setLabel: 'Issue Status Chart'
 ]
 
 { #category : 'initialization' }

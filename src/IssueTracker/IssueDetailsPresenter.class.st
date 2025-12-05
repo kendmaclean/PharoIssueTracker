@@ -111,57 +111,57 @@ IssueDetailsPresenter >> autoCalculateDates [
 
 { #category : 'initialization' }
 IssueDetailsPresenter >> buildLayoutWithDependencies: showDeps [
-    | boxLayout |
-    
-    boxLayout := SpBoxLayout newTopToBottom
-        spacing: 8;
-        add: 'Issue Details' expand: false;
-        add: (SpBoxLayout newLeftToRight
-            add: 'Title:' width: 80;
-            add: titleInput;
-            yourself)
-        expand: false;
-        add: (SpBoxLayout newLeftToRight
-            add: 'Priority:' width: 80;
-            add: priorityDropdown width: 120;
-            add: 'Status:' width: 80;
-            add: statusDropdown width: 120;
-            yourself)
-        expand: false;
-        add: (SpBoxLayout newLeftToRight
-            add: 'Start Date:' width: 80;
-            add: startDateInput;
-            add: 'Duration:' width: 80;
-            add: durationInput width: 100;
-            add: 'Due Date:' width: 80;
-            add: dueDateInput;
-            yourself)
-        expand: false;
-        add: 'Description:' expand: false;
-        add: descriptionInput height: 80;
-        yourself.
-    
-    "Conditionally add dependencies section"
-    showDeps ifTrue: [
-        boxLayout 
-            add: 'Dependencies (this issue depends on):' expand: false;
-            add: dependenciesList height: 100 ].
-    
-    boxLayout
-        add: (SpBoxLayout newLeftToRight
-            spacing: 5;
-            add: addDependencyButton;
-            add: removeDependencyButton;
-            yourself)
-        expand: false;
-        add: (SpBoxLayout newLeftToRight
-            spacing: 5;
-            add: addButton;
-            add: deleteButton;
-            yourself)
-        expand: false.
-    
-    ^ boxLayout
+
+	| boxLayout |
+	boxLayout := SpBoxLayout newTopToBottom
+		             spacing: 8;
+		             add: 'Issue Details' expand: false;
+		             add: (SpBoxLayout newLeftToRight
+				              add: 'Title:' width: 80;
+				              add: titleInput;
+				              yourself)
+		             expand: false;
+		             add: (SpBoxLayout newLeftToRight
+				              add: 'Priority:' width: 80;
+				              add: priorityDropdown width: 120;
+				              add: 'Status:' width: 80;
+				              add: statusDropdown width: 120;
+				              yourself)
+		             expand: false;
+		             add: (SpBoxLayout newLeftToRight
+				              add: 'Start Date:' width: 80;
+				              add: startDateInput;
+				              add: 'Duration:' width: 80;
+				              add: durationInput width: 100;
+				              add: 'Due Date:' width: 80;
+				              add: dueDateInput;
+				              yourself)
+		             expand: false;
+		             add: 'Description:' expand: false;
+		             add: descriptionInput height: 80;
+		             yourself.
+
+	"Conditionally add dependencies section"
+	showDeps ifTrue: [
+		boxLayout
+			add: 'Dependencies (this issue depends on):' expand: false;
+			add: dependenciesList height: 125 ].
+
+	boxLayout
+		add: (SpBoxLayout newLeftToRight
+				 spacing: 5;
+				 add: addDependencyButton;
+				 add: removeDependencyButton;
+				 yourself)
+		expand: false;
+		add: (SpBoxLayout newLeftToRight
+				 spacing: 5;
+				 add: addButton;
+				 add: deleteButton;
+				 yourself)
+		expand: false.
+
+	^ boxLayout
 ]
 
 { #category : 'initialization' }
