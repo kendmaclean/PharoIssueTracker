@@ -39,9 +39,13 @@ IssueDetailsPresenter >> addDependency [
         title: 'Select issue this depends on:'.
     
     selectedIssue ifNotNil: [
-        currentIssue addDependency: selectedIssue.
-        dependenciesList items: currentIssue dependencies.
-        self owner issueListChanged ]
+        [ currentIssue addDependency: selectedIssue.
+          dependenciesList items: currentIssue dependencies.
+          self owner issueListChanged ]
+        on: Error 
+        do: [ :ex | 
+            self inform: 'Cannot add dependency: ', ex messageText ] ]
+
 ]
 
 { #category : 'initialization' }
@@ -138,33 +142,33 @@ IssueDetailsPresenter >> clearForm [
 
 { #category : 'initialization' }
 IssueDetailsPresenter >> createNewIssue [
-    | issue startDate dueDate duration |
-    
-    titleInput text ifEmpty: [
-        self inform: 'Please enter a title'.
-        ^ self ].
-    
-    "Get values, handling nil properly"
-    startDate := startDateInput date.
-    dueDate := dueDateInput date.
-    duration := self selectedDuration.
-    
-    issue := Issue new
-        title: titleInput text;
-        description: descriptionInput text;
-        priority: priorityDropdown selectedItem;
-        status: statusDropdown selectedItem;
-        yourself.
-    
-    "Only set non-nil values"
-    startDate ifNotNil: [ issue startDate: startDate ].
-    duration ifNotNil: [ issue duration: duration ].
-    dueDate ifNotNil: [ issue dueDate: dueDate ].
-    
-    IssueRepository uniqueInstance addIssue: issue.
-    
-    self clearForm.
-    self owner issueListChanged
+
+	| issue startDate dueDate duration |
+	titleInput text ifEmpty: [
+		self inform: 'Please enter a title'.
+		^ self ].
+
+	"Get values, handling nil properly"
+	startDate := startDateInput date.
+	dueDate := dueDateInput date.
+	duration := self selectedDuration.
+
+	issue := Issue new
+		         title: titleInput text;
+		         description: descriptionInput text;
+		         priority: priorityDropdown selectedItem;
+		         status: statusDropdown selectedItem;
+		         yourself.
+
+	"Only set non-nil values"
+	startDate ifNotNil: [ issue startDate: startDate ].
+	duration ifNotNil: [ issue duration: duration ].
+	dueDate ifNotNil: [ issue dueDate: dueDate ].
+
+	IssueRepository uniqueInstance addIssue: issue.
+
+	self clearForm.
+	self owner issueListChanged
 ]
 
 { #category : 'initialization' }

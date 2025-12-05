@@ -158,14 +158,14 @@ IssueGanttPresenter >> buildGanttOn: rsCanvas [
     "Filter issues that have either a due date or can compute one"
     issues := IssueRepository uniqueInstance allIssues 
         select: [ :issue | 
-            issue computedDueDate notNil and: [ issue computedStartDate notNil ] ].
+            issue dependencyAwareEndDate notNil and: [ issue dependencyAwareStartDate notNil ] ].
     
     issues ifEmpty: [ 
         ^ self showEmptyMessageOn: rsCanvas ].
     
-    "Use earliest start date as baseline"
-    baselineDate := (issues collect: #computedStartDate) min.
-    maxDate := (issues collect: #computedDueDate) max.
+    "Use earliest dependency-aware start date as baseline"
+    baselineDate := (issues collect: #dependencyAwareStartDate) min.
+    maxDate := (issues collect: #dependencyAwareEndDate) max.
     daySpan := (maxDate julianDayNumber - baselineDate julianDayNumber) max: 1.
     
     leftMargin := 100.
@@ -175,30 +175,43 @@ IssueGanttPresenter >> buildGanttOn: rsCanvas [
     
     "Create bars for each issue"
     issues withIndexDo: [ :issue :index |
-        | bar width label composite startDays endDays startX |
+        | bar width label composite startDays endDays startX hasDelayDue originalStart |
         
-        "Calculate days from baseline"
-        startDays := issue computedStartDate julianDayNumber - baselineDate julianDayNumber.
-        endDays := issue computedDueDate julianDayNumber - baselineDate julianDayNumber.
+        "Calculate days from baseline using dependency-aware dates"
+        startDays := issue dependencyAwareStartDate julianDayNumber - baselineDate julianDayNumber.
+        endDays := issue dependencyAwareEndDate julianDayNumber - baselineDate julianDayNumber.
+        
+        "Check if issue is delayed due to dependencies"
+        originalStart := issue computedStartDate.
+        hasDelayDue := originalStart notNil and: [ 
+            issue dependencyAwareStartDate > originalStart ].
         
         "Calculate position and width"
         startX := leftMargin + (startDays * 20).
         width := ((endDays - startDays) max: 1) * 20.
         
-        "Create bar - position it at the left edge (not centered)"
+        "Create bar - with visual indicator if delayed"
         bar := RSBox new
             width: width;
             height: 25;
-            color: (self colorForStatus: issue status);
+            color: (hasDelayDue 
+                ifTrue: [ (self colorForStatus: issue status) darker ]
+                ifFalse: [ self colorForStatus: issue status ]);
             model: issue;
             yourself.
+        
+        "Add border if delayed"
+        hasDelayDue ifTrue: [
+            bar border: (RSBorder new color: Color red; width: 2) ].
         
         "Position bar relative to its center"
         bar translateBy: (width / 2) @ 0.
         
         "Create label"
         label := RSLabel new
-            text: issue title;
+            text: (hasDelayDue 
+                ifTrue: [ issue title, ' (delayed)' ]
+                ifFalse: [ issue title ]);
             fontSize: 10;
             yourself.
         
@@ -220,12 +233,20 @@ IssueGanttPresenter >> buildGanttOn: rsCanvas [
         
         "Add tooltip to bar only"
         bar @ (RSPopup text: [ :i | 
-            i title, String cr,
-            'Status: ', i status asString, String cr,
-            'Priority: ', i priority asString, String cr,
-            'Start: ', i computedStartDate asString, String cr,
-            'Due: ', i computedDueDate asString, String cr,
-            'Duration: ', i computedDuration asString, ' days' ]) ].
+            | tooltip |
+            tooltip := i title, String cr,
+                'Status: ', i status asString, String cr,
+                'Priority: ', i priority asString, String cr.
+            originalStart notNil ifTrue: [
+                tooltip := tooltip, 'Original Start: ', originalStart asString, String cr ].
+            tooltip := tooltip,
+                'Actual Start: ', i dependencyAwareStartDate asString, String cr,
+                'End: ', i dependencyAwareEndDate asString, String cr,
+                'Duration: ', i computedDuration asString, ' days'.
+            hasDelayDue ifTrue: [
+                tooltip := tooltip, String cr, 
+                    '⚠ Delayed by dependencies' ].
+            tooltip ]) ].
     
     rsCanvas addAll: shapes.
     

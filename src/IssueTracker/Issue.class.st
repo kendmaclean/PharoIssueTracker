@@ -19,9 +19,12 @@ Class {
 
 { #category : 'initialization' }
 Issue >> addDependency: anIssue [
-    "Add a dependency - this issue depends on anIssue completing first"
-    (dependencies includes: anIssue) ifFalse: [
-        dependencies add: anIssue ]
+	"Add a dependency - this issue depends on anIssue completing first"
+
+	(dependencies includes: anIssue) ifFalse: [ "Check for circular dependency"
+		(self wouldCreateCircularDependency: anIssue) ifTrue: [
+			^ self error: 'Cannot add dependency: would create circular dependency' ].
+		dependencies add: anIssue ]
 ]
 
 { #category : 'accessing' }
@@ -90,6 +93,43 @@ Issue >> dependencies [
 Issue >> dependencies: anObject [
 
 	dependencies := anObject
+]
+
+{ #category : 'accessing' }
+Issue >> dependencyAwareEndDate [
+    "Returns the end date adjusted for dependencies"
+    | adjStart |
+    
+    adjStart := self dependencyAwareStartDate.
+    adjStart ifNil: [ ^ nil ].
+    
+    ^ adjStart asDate addDays: self computedDuration
+]
+
+{ #category : 'accessing' }
+Issue >> dependencyAwareStartDate [
+    "Returns the start date adjusted for dependencies"
+    | baseStart latestDependencyEnd |
+    
+    "Get the base start date (user-specified or computed)"
+    baseStart := self computedStartDate.
+    
+    "If no dependencies, use base start"
+    self hasDependencies ifFalse: [ ^ baseStart ].
+    
+    "Find the latest end date among dependencies"
+    latestDependencyEnd := dependencies 
+        collect: [ :dep | dep dependencyAwareEndDate ]
+        thenSelect: [ :date | date notNil ].
+    
+    latestDependencyEnd ifEmpty: [ ^ baseStart ].
+    
+    latestDependencyEnd := latestDependencyEnd max.
+    
+    "Return the later of base start or latest dependency end"
+    ^ baseStart 
+        ifNil: [ latestDependencyEnd ]
+        ifNotNil: [ baseStart max: latestDependencyEnd ]
 ]
 
 { #category : 'accessing' }
@@ -232,4 +272,31 @@ Issue >> title [
 Issue >> title: anObject [
 
 	title := anObject
+]
+
+{ #category : 'initialization' }
+Issue >> wouldCreateCircularDependency: anIssue [
+    "Check if adding anIssue as a dependency would create a circular dependency"
+    "This issue depends on anIssue. Check if anIssue (directly or indirectly) depends on this issue"
+    ^ self wouldCreateCircularDependency: anIssue visited: Set new
+]
+
+{ #category : 'initialization' }
+Issue >> wouldCreateCircularDependency: anIssue visited: visitedSet [
+    "Recursive check for circular dependencies with cycle detection"
+    
+    "If anIssue is this issue, we found a circle"
+    anIssue = self ifTrue: [ ^ true ].
+    
+    "If we've already visited this issue, skip (avoid infinite recursion)"
+    (visitedSet includes: anIssue) ifTrue: [ ^ false ].
+    
+    "Mark as visited"
+    visitedSet add: anIssue.
+    
+    "Check if any of anIssue's dependencies lead back to self"
+    anIssue dependencies do: [ :dep |
+        (self wouldCreateCircularDependency: dep visited: visitedSet) ifTrue: [ ^ true ] ].
+    
+    ^ false
 ]
