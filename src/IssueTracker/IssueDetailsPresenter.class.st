@@ -41,11 +41,11 @@ IssueDetailsPresenter >> addDependency [
     selectedIssue ifNotNil: [
         [ currentIssue addDependency: selectedIssue.
           dependenciesList items: currentIssue dependencies.
+          self updateDependenciesVisibility.
           self owner issueListChanged ]
         on: Error 
         do: [ :ex | 
             self inform: 'Cannot add dependency: ', ex messageText ] ]
-
 ]
 
 { #category : 'initialization' }
@@ -107,6 +107,61 @@ IssueDetailsPresenter >> autoCalculateDates [
     "Clear markers if we can't calculate anything"
     self clearAutoCalculatedMarkers.
     self onFieldChanged
+]
+
+{ #category : 'initialization' }
+IssueDetailsPresenter >> buildLayoutWithDependencies: showDeps [
+    | boxLayout |
+    
+    boxLayout := SpBoxLayout newTopToBottom
+        spacing: 8;
+        add: 'Issue Details' expand: false;
+        add: (SpBoxLayout newLeftToRight
+            add: 'Title:' width: 80;
+            add: titleInput;
+            yourself)
+        expand: false;
+        add: (SpBoxLayout newLeftToRight
+            add: 'Priority:' width: 80;
+            add: priorityDropdown width: 120;
+            add: 'Status:' width: 80;
+            add: statusDropdown width: 120;
+            yourself)
+        expand: false;
+        add: (SpBoxLayout newLeftToRight
+            add: 'Start Date:' width: 80;
+            add: startDateInput;
+            add: 'Duration:' width: 80;
+            add: durationInput width: 100;
+            add: 'Due Date:' width: 80;
+            add: dueDateInput;
+            yourself)
+        expand: false;
+        add: 'Description:' expand: false;
+        add: descriptionInput height: 80;
+        yourself.
+    
+    "Conditionally add dependencies section"
+    showDeps ifTrue: [
+        boxLayout 
+            add: 'Dependencies (this issue depends on):' expand: false;
+            add: dependenciesList height: 100 ].
+    
+    boxLayout
+        add: (SpBoxLayout newLeftToRight
+            spacing: 5;
+            add: addDependencyButton;
+            add: removeDependencyButton;
+            yourself)
+        expand: false;
+        add: (SpBoxLayout newLeftToRight
+            spacing: 5;
+            add: addButton;
+            add: deleteButton;
+            yourself)
+        expand: false.
+    
+    ^ boxLayout
 ]
 
 { #category : 'initialization' }
@@ -173,48 +228,7 @@ IssueDetailsPresenter >> createNewIssue [
 
 { #category : 'initialization' }
 IssueDetailsPresenter >> defaultLayout [
-
-	^ SpBoxLayout newTopToBottom
-		  spacing: 8;
-		  add: 'Issue Details' expand: false;
-		  add: (SpBoxLayout newLeftToRight
-				   add: 'Title:' width: 80;
-				   add: titleInput;
-				   yourself)
-		  expand: false;
-		  add: (SpBoxLayout newLeftToRight
-				   add: 'Priority:' width: 80;
-				   add: priorityDropdown width: 120;
-				   add: 'Status:' width: 80;
-				   add: statusDropdown width: 120;
-				   yourself)
-		  expand: false;
-		  add: (SpBoxLayout newLeftToRight
-				   add: 'Start Date:' width: 80;
-				   add: startDateInput;
-				   add: 'Duration:' width: 80;
-				   add: durationInput width: 100;
-				   add: 'Due Date:' width: 80;
-				   add: dueDateInput;
-				   yourself)
-		  expand: false;
-		  add: 'Description:' expand: false;
-		  add: descriptionInput height: 80;
-		  add: 'Dependencies (this issue depends on):' expand: false;
-		  add: dependenciesList height: 125;
-		  add: (SpBoxLayout newLeftToRight
-				   spacing: 5;
-				   add: addDependencyButton;
-				   add: removeDependencyButton;
-				   yourself)
-		  expand: false;
-		  add: (SpBoxLayout newLeftToRight
-				   spacing: 5;
-				   add: addButton;
-				   add: deleteButton;
-				   yourself)
-		  expand: false;
-		  yourself
+    ^ self buildLayoutWithDependencies: false
 ]
 
 { #category : 'initialization' }
@@ -323,9 +337,11 @@ IssueDetailsPresenter >> initializePresenters [
 IssueDetailsPresenter >> loadDependencies: anIssue [
     anIssue ifNil: [ 
         dependenciesList items: #().
+        self updateDependenciesVisibility.
         ^ self ].
     
-    dependenciesList items: anIssue dependencies
+    dependenciesList items: anIssue dependencies.
+    self updateDependenciesVisibility
 ]
 
 { #category : 'initialization' }
@@ -387,6 +403,7 @@ IssueDetailsPresenter >> removeDependency [
     
     currentIssue removeDependency: selectedDep.
     dependenciesList items: currentIssue dependencies.
+    self updateDependenciesVisibility.
     self owner issueListChanged
 ]
 
@@ -426,4 +443,15 @@ IssueDetailsPresenter >> titleText [
 { #category : 'initialization' }
 IssueDetailsPresenter >> updateButtonStates [
 	deleteButton enabled: self owner hasCurrentIssue
+]
+
+{ #category : 'initialization' }
+IssueDetailsPresenter >> updateDependenciesVisibility [
+    "Rebuild layout with or without dependencies section"
+    | currentIssue hasDeps |
+    
+    currentIssue := self owner currentIssue.
+    hasDeps := currentIssue notNil and: [ currentIssue hasDependencies ].
+    
+    self layout: (self buildLayoutWithDependencies: hasDeps)
 ]
