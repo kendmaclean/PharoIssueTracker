@@ -23,37 +23,34 @@ IssueTrackerGanttPresenter class >> open [
 
 { #category : 'initialization' }
 IssueTrackerGanttPresenter >> addDateAxis: rsCanvas from: startDate to: endDate count: issueCount leftMargin: leftMargin [
-
 	| currentDate xPos labels dateLabel gridLine |
+	
 	labels := OrderedCollection new.
 	currentDate := startDate.
-
+	
 	"Add labels every week"
 	[ currentDate <= endDate ] whileTrue: [
-		xPos := leftMargin
-		        +
-		        (currentDate julianDayNumber - startDate julianDayNumber
-		         * 20).
-
+		xPos := (currentDate julianDayNumber - startDate julianDayNumber) * 20 + leftMargin.
+		
 		"Date label"
 		dateLabel := RSLabel new
-			             text: currentDate asString;
-			             fontSize: 8;
-			             color: Color gray;
-			             yourself.
+			text: currentDate asString;
+			fontSize: 8;
+			color: Color gray;
+			yourself.
 		dateLabel translateBy: xPos @ -20.
 		labels add: dateLabel.
-
+		
 		"Vertical grid line"
 		gridLine := RSLine new
-			            startPoint: xPos @ -10;
-			            endPoint: xPos @ ((issueCount - 1) * 35 + 35);
-			            color: (Color gray alpha: 0.2);
-			            yourself.
+			startPoint: xPos @ -10;
+			endPoint: xPos @ ((issueCount - 1) * 35 + 35);
+			color: (Color gray alpha: 0.2);
+			yourself.
 		labels add: gridLine.
-
+		
 		currentDate := currentDate addDays: 7 ].
-
+	
 	rsCanvas addAll: labels
 ]
 
@@ -274,6 +271,12 @@ IssueTrackerGanttPresenter >> buildGanttOn: rsCanvas [
 
 	rsCanvas @ RSCanvasController.
 	^ rsCanvas
+]
+
+{ #category : 'initialization' }
+IssueTrackerGanttPresenter >> clearCurrentIssue [
+	"Clear the current issue selection"
+	currentIssue := nil
 ]
 
 { #category : 'initialization' }

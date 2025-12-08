@@ -215,7 +215,14 @@ IssueDetailsPresenter >> createNewIssue [
 
 	IssueRepository uniqueInstance addIssue: issue.
 
+	"Set isLoadingIssue flag to prevent field change events from updating the old current issue"
+	isLoadingIssue := true.
 	self clearForm.
+	isLoadingIssue := false.
+	
+	"Clear the current issue selection so typing in the form doesn't update the old issue"
+	self owner clearCurrentIssue.
+	
 	self owner issueListChanged
 ]
 
