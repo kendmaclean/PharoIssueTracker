@@ -18,17 +18,17 @@ Class {
 
 { #category : 'initialization' }
 IssueToolbarPresenter >> defaultLayout [
-    ^ SpBoxLayout newLeftToRight
-        spacing: 5;
-        add: showAllButton;
-        add: showTodayButton;
-        add: showWeekButton;
-        add: hideClosedButton;
-        add: ' ';
-        addLast: chartButton;
-        addLast: ganttButton;
-        addLast: saveButton;
-        yourself
+
+	^ SpBoxLayout newLeftToRight
+		  spacing: 5;
+		  add: showAllButton;
+		  add: showTodayButton;
+		  add: showWeekButton;
+		  add: hideClosedButton;
+		  add: ' ';
+		  addLast: chartButton;
+		  addLast: saveButton;
+		  yourself
 ]
 
 { #category : 'initialization' }
@@ -79,13 +79,6 @@ IssueToolbarPresenter >> initializePresenters [
 		               action: [ self onShowChart ];
 		               yourself.
 
-    "Add Gantt button after chart button"
-    ganttButton := self newButton
-        label: 'Gantt';
-        icon: (self iconNamed: #timeline);
-        action: [ self onShowGantt ];
-        yourself.
-
 	saveButton := self newButton
 		              label: 'Save';
 		              icon: (self iconNamed: #smallSave);
@@ -112,11 +105,6 @@ IssueToolbarPresenter >> onShowAll [
 IssueToolbarPresenter >> onShowChart [
 
 	IssueChartPresenter open
-]
-
-{ #category : 'initialization' }
-IssueToolbarPresenter >> onShowGantt [
-    IssueGanttPresenter open
 ]
 
 { #category : 'initialization' }

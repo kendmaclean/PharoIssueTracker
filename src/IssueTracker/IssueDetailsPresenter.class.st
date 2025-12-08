@@ -23,29 +23,43 @@ Class {
 
 { #category : 'initialization' }
 IssueDetailsPresenter >> addDependency [
+
 	| validCandidates currentIssue selectedIssue |
 	currentIssue := self owner currentIssue.
 	currentIssue ifNil: [ ^ self inform: 'Please select an issue first' ].
 
 	"Use the Handler to find valid candidates from the repository"
-	validCandidates := currentIssue dependencyHandler 
-		availableDependenciesIn: IssueRepository uniqueInstance allIssues.
+	validCandidates := currentIssue dependencyHandler
+		                   availableDependenciesIn:
+		                   IssueRepository uniqueInstance allIssues.
 
-	validCandidates ifEmpty: [ ^ self inform: 'No available issues to add as dependencies' ].
+	validCandidates ifEmpty: [
+		^ self inform: 'No available issues to add as dependencies' ].
 
-	selectedIssue := UIManager default 
-		chooseFrom: (validCandidates collect: #title)
-		values: validCandidates
-		title: 'Select issue this depends on:'.
+	selectedIssue := UIManager default
+		                 chooseFrom: (validCandidates collect: #title)
+		                 values: validCandidates
+		                 title: 'Select issue this depends on:'.
 
 	selectedIssue ifNotNil: [
-		[ 
-		  currentIssue addDependency: selectedIssue.
-		  dependenciesList items: currentIssue dependencies.
-		  self updateDependenciesVisibility.
-		  self owner issueListChanged 
-		] on: Error do: [ :ex | self inform: ex messageText ] 
-	]
+		[
+		currentIssue addDependency: selectedIssue.
+		dependenciesList items: currentIssue dependencies.
+		self updateDependenciesVisibility.
+		self owner issueListChanged ]
+			on: Error
+			do: [ :ex | self inform: ex messageText ] ].
+		
+	selectedIssue ifNotNil: [
+			[ 
+			  currentIssue addDependency: selectedIssue.
+			  dependenciesList items: currentIssue dependencies.
+			  self updateDependenciesVisibility.
+			  self owner dependenciesChanged  "Changed from issueListChanged"
+			] on: Error do: [ :ex | self inform: ex messageText ] 
+	]		
+	
+
 ]
 
 { #category : 'initialization' }
@@ -285,12 +299,38 @@ IssueDetailsPresenter >> descriptionText [
 ]
 
 { #category : 'initialization' }
+IssueDetailsPresenter >> ensureDependenciesInitialized [
+	"Ensure dependencies list is initialized if not already done"
+	dependenciesList ifNil: [
+		dependenciesList := self newTable.
+		dependenciesList 
+			addColumn: ((SpStringTableColumn 
+				title: 'Dependencies' 
+				evaluated: [ :anIssue | anIssue title ]) yourself);
+			beResizable.
+		
+		addDependencyButton := self newButton
+			label: 'Add';
+			icon: (self iconNamed: #link);
+			action: [ self addDependency ];
+			yourself.
+		
+		removeDependencyButton := self newButton
+			label: 'Remove';
+			icon: (self iconNamed: #delete);
+			action: [ self removeDependencySelected ];
+			yourself ]
+
+]
+
+{ #category : 'initialization' }
 IssueDetailsPresenter >> hasCurrentIssue [
 	^ self owner hasCurrentIssue
 ]
 
 { #category : 'initialization' }
 IssueDetailsPresenter >> initializePresenters [
+
 	isLoadingIssue := false.
 	lastChangedField := nil.
 	"Title"
@@ -333,7 +373,7 @@ IssueDetailsPresenter >> initializePresenters [
 		                  selectIndex: 1;
 		                  yourself.
 	statusDropdown whenSelectedItemChangedDo: [ self onFieldChanged ].
-	
+
 	"Action buttons"
 	addButton := self newButton
 		             label: 'Create New Issue';
@@ -344,7 +384,27 @@ IssueDetailsPresenter >> initializePresenters [
 		                label: 'Delete Issue';
 		                icon: (self iconNamed: #delete);
 		                action: [ self deleteIssue ];
-		                yourself
+		                yourself.
+		
+	"Dependencies UI components"
+	dependenciesList := self newTable.
+	dependenciesList 
+	    addColumn: ((SpStringTableColumn 
+	        title: 'Dependencies' 
+	        evaluated: [ :anIssue | anIssue title ]) yourself);
+	    beResizable.
+
+	addDependencyButton := self newButton
+	    label: 'Add Dependency';
+	    icon: (self iconNamed: #link);
+	    action: [ self addDependency ];
+	    yourself.
+
+	removeDependencyButton := self newButton
+	    label: 'Remove';
+	    icon: (self iconNamed: #delete);
+	    action: [ self removeDependencySelected ];
+	    yourself
 ]
 
 { #category : 'initialization' }
@@ -440,7 +500,7 @@ IssueDetailsPresenter >> removeDependencyDirect: aDependency [
 	currentIssue removeDependency: aDependency.
 	dependenciesList items: currentIssue dependencies.
 	self updateDependenciesVisibility.
-	self owner issueListChanged
+	self owner dependenciesChanged  "Changed from issueListChanged"
 ]
 
 { #category : 'initialization' }
