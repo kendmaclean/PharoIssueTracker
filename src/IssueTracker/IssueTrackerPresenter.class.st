@@ -13,7 +13,9 @@ Class {
 		'issueList',
 		'detailsForm',
 		'issues',
-		'currentIssue'
+		'currentIssue',
+		'moveUpButton',
+		'moveDownButton'
 	],
 	#category : 'IssueTracker',
 	#package : 'IssueTracker'
@@ -34,13 +36,20 @@ IssueTrackerPresenter >> currentIssue [
 IssueTrackerPresenter >> defaultLayout [
 
 	^ SpBoxLayout newTopToBottom
-		  spacing: 0;
+		  spacing: 5;
 		  add: toolbar expand: false;
-		  add: (SpPanedLayout newTopToBottom
-				   positionOfSlider: 0.4;
+		  add: (SpBoxLayout newLeftToRight
+				   spacing: 5;
 				   add: issueList;
-				   add: detailsForm;
+				   add: (SpBoxLayout newTopToBottom
+						    spacing: 5;
+						    add: moveUpButton expand: false;
+						    add: moveDownButton expand: false;
+						    addLast: '';
+						    "spacer"yourself)
+				   width: 50;
 				   yourself);
+		  add: detailsForm height: 400;
 		  yourself
 ]
 
@@ -82,14 +91,54 @@ IssueTrackerPresenter >> hasCurrentIssue [
 
 { #category : 'initialization' }
 IssueTrackerPresenter >> initializePresenters [
-	issues := IssueRepository uniqueInstance allIssues.
-	currentIssue := nil.
-	
-	toolbar := self instantiate: IssueToolbarPresenter.
-	issueList := self instantiate: IssueListPresenter.
-	detailsForm := self instantiate: IssueDetailsPresenter.
-	
-	self updateIssueList
+    issues := IssueRepository uniqueInstance allIssues.
+    currentIssue := nil.
+    
+    toolbar := self instantiate: IssueToolbarPresenter.
+    issueList := self newTable.
+    detailsForm := self instantiate: IssueDetailsPresenter.
+    
+    "Add reordering buttons"
+    moveUpButton := self newButton
+        label: '↑';
+        icon: (self iconNamed: #up);
+        help: 'Move issue up';
+        action: [ self moveIssueUp ];
+        yourself.
+    
+    moveDownButton := self newButton
+        label: '↓';
+        icon: (self iconNamed: #down);
+        help: 'Move issue down';
+        action: [ self moveIssueDown ];
+        yourself.
+    
+    issueList
+        addColumn: ((SpStringTableColumn 
+            title: 'Title' 
+            evaluated: [ :anIssue | anIssue title ]) yourself);
+        addColumn: ((SpStringTableColumn 
+            title: 'Priority' 
+            evaluated: [ :anIssue | anIssue priority asString ]) width: 100; yourself);
+        addColumn: ((SpStringTableColumn 
+            title: 'Status' 
+            evaluated: [ :anIssue | anIssue status asString ]) width: 100; yourself);
+        addColumn: ((SpStringTableColumn 
+            title: 'Due Date' 
+            evaluated: [ :anIssue | 
+                anIssue dueDate 
+                    ifNil: [ '' ] 
+                    ifNotNil: [ :date | date asDate asString ] ]) width: 120; yourself);
+        items: issues;
+        beResizable.
+    
+    issueList whenSelectionChangedDo: [ :selection | 
+        selection selectedItem ifNotNil: [ :selectedIssue |
+            currentIssue := selectedIssue.
+            detailsForm loadIssue: selectedIssue.
+            self updateMoveButtonsState ] ].
+    
+    self updateMoveButtonsState
 ]
 
 { #category : 'initialization' }
@@ -97,7 +146,7 @@ IssueTrackerPresenter >> initializeWindow: aWindowPresenter [
 
 	aWindowPresenter
 		title: 'Issue Tracker';
-		initialExtent: 800 @ 600
+		initialExtent: 800 @ 800
 ]
 
 { #category : 'initialization' }
@@ -107,9 +156,72 @@ IssueTrackerPresenter >> issueListChanged [
 ]
 
 { #category : 'initialization' }
+IssueTrackerPresenter >> moveIssueDown [
+    | repository currentIndex itemToMove |
+    currentIssue ifNil: [ ^ self ].
+    
+    itemToMove := currentIssue.
+    repository := IssueRepository uniqueInstance.
+    currentIndex := repository allIssues indexOf: itemToMove.
+    
+    currentIndex < repository allIssues size ifTrue: [
+        "Swap directly in the repository's internal collection"
+        repository swapIssueAt: currentIndex with: currentIndex + 1.
+        
+        "Refresh the display"
+        issueList items: repository allIssues.
+        currentIssue := itemToMove.
+        issueList selectIndex: currentIndex + 1.
+        self updateMoveButtonsState ]
+]
+
+{ #category : 'initialization' }
+IssueTrackerPresenter >> moveIssueUp [
+    | repository currentIndex itemToMove |
+    currentIssue ifNil: [ ^ self ].
+    
+    itemToMove := currentIssue.
+    repository := IssueRepository uniqueInstance.
+    currentIndex := repository allIssues indexOf: itemToMove.
+    
+    Transcript show: 'Before move: currentIssue = ', itemToMove title; cr.
+    Transcript show: 'Current index: ', currentIndex asString; cr.
+    
+    currentIndex > 1 ifTrue: [
+        "Swap directly in the repository's internal collection"
+        repository swapIssueAt: currentIndex with: currentIndex - 1.
+        
+        "Refresh the display"
+        issueList items: repository allIssues.
+        currentIssue := itemToMove.
+        issueList selectIndex: currentIndex - 1.
+        self updateMoveButtonsState ]
+]
+
+{ #category : 'initialization' }
 IssueTrackerPresenter >> onIssueSelected: anIssue [
 	currentIssue := anIssue.
 	detailsForm loadIssue: anIssue
+]
+
+{ #category : 'initialization' }
+IssueTrackerPresenter >> reorderIssue: draggedIssue dropItem: targetIssue [
+    "Reorder the issue in the repository when dropped on another issue"
+    | allIssues dragIndex targetIndex |
+    
+    allIssues := IssueRepository uniqueInstance allIssues.
+    dragIndex := allIssues indexOf: draggedIssue.
+    targetIndex := allIssues indexOf: targetIssue.
+    
+    "Remove from old position and insert at new position"
+    allIssues removeAt: dragIndex.
+    allIssues add: draggedIssue beforeIndex: targetIndex.
+    
+    "Update the display"
+    issueList items: allIssues.
+    
+    "Keep selection"
+    issueList selectItem: draggedIssue
 ]
 
 { #category : 'initialization' }
@@ -137,4 +249,21 @@ IssueTrackerPresenter >> updateIssueList [
 				issue dueDate asDate between: today and: weekFromNow ] ] ].
 	
 	issueList items: filteredIssues
+]
+
+{ #category : 'initialization' }
+IssueTrackerPresenter >> updateMoveButtonsState [
+    "Enable/disable move buttons based on selection position"
+    | allIssues currentIndex |
+    
+    currentIssue ifNil: [
+        moveUpButton enabled: false.
+        moveDownButton enabled: false.
+        ^ self ].
+    
+    allIssues := IssueRepository uniqueInstance allIssues.
+    currentIndex := allIssues indexOf: currentIssue.
+    
+    moveUpButton enabled: currentIndex > 1.
+    moveDownButton enabled: currentIndex < allIssues size
 ]

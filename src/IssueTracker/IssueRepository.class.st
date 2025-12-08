@@ -46,3 +46,9 @@ IssueRepository >> issues [
 IssueRepository >> removeIssue: anIssue [
     issues remove: anIssue
 ]
+
+{ #category : 'initialization' }
+IssueRepository >> swapIssueAt: index1 with: index2 [
+    "Swap two issues in the collection"
+    issues swap: index1 with: index2
+]
