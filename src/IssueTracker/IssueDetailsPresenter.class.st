@@ -355,6 +355,14 @@ IssueDetailsPresenter >> initializePresenters [
 ]
 
 { #category : 'initialization' }
+IssueDetailsPresenter >> initializeWindow: aWindowPresenter [
+
+	aWindowPresenter
+		title: 'Issue Tracker - Gantt View';
+		initialExtent: 1200 @ 800
+]
+
+{ #category : 'initialization' }
 IssueDetailsPresenter >> loadDependencies: anIssue [
     "Dependencies are managed via dialog, not displayed in form"
     ^ self
