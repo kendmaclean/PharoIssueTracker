@@ -371,20 +371,29 @@ IssueTrackerGanttPresenter >> getFilteredIssues [
 	
 	"Apply due date filter"
 	toolbar dueDateFilter = #today ifTrue: [
+		| today |
+		today := Date today.
 		filteredIssues := filteredIssues select: [ :issue |
-			issue dueDate notNil and: [ 
-				issue dueDate asDate = Date today ] ] ].
+			| startDate endDate |
+			startDate := issue dependencyAwareStartDate.
+			endDate := issue dependencyAwareEndDate.
+			startDate notNil and: [ endDate notNil and: [
+				"Issue is active today if today falls between start and end dates"
+				today between: startDate asDate and: endDate asDate ] ] ] ].
 	
 	toolbar dueDateFilter = #week ifTrue: [
 		| today weekFromNow |
 		today := Date today.
 		weekFromNow := today addDays: 7.
 		filteredIssues := filteredIssues select: [ :issue |
-			issue dueDate notNil and: [
-				issue dueDate asDate between: today and: weekFromNow ] ] ].
+			| startDate endDate |
+			startDate := issue dependencyAwareStartDate.
+			endDate := issue dependencyAwareEndDate.
+			startDate notNil and: [ endDate notNil and: [
+				"Issue is active this week if it overlaps with the week period"
+				(startDate asDate <= weekFromNow) and: [ endDate asDate >= today ] ] ] ] ].
 	
 	^ filteredIssues
-
 ]
 
 { #category : 'initialization' }

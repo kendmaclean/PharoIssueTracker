@@ -24,6 +24,13 @@ ManifestIssueTracker class >> ruleGuardingClauseRuleV1FalsePositive [
 ]
 
 { #category : 'code-critics' }
+ManifestIssueTracker class >> ruleLongMethodsRuleV1FalsePositive [
+
+	<ignoreForCoverage>
+	^ #(#(#(#RGMethodDefinition #(#IssueTrackerPresenter #updateIssueList #false)) #'2025-12-08T16:14:44.863885-05:00') )
+]
+
+{ #category : 'code-critics' }
 ManifestIssueTracker class >> ruleReGuardClauseRuleV1FalsePositive [
 
 	<ignoreForCoverage>

@@ -80,7 +80,7 @@ IssueTrackerPresenter >> defaultLayout [
 						    "spacer"yourself)
 				   width: 50;
 				   yourself);
-		  add: detailsForm height: 400;
+		  add: detailsForm height: 280;
 		  yourself
 ]
 
@@ -202,7 +202,7 @@ IssueTrackerPresenter >> initializeWindow: aWindowPresenter [
 
 	aWindowPresenter
 		title: 'Issue Tracker';
-		initialExtent: 800 @ 800
+		initialExtent: 1000 @ 600
 ]
 
 { #category : 'initialization' }
@@ -311,17 +311,27 @@ IssueTrackerPresenter >> updateIssueList [
 	
 	"Apply due date filter"
 	toolbar dueDateFilter = #today ifTrue: [
+		| today |
+		today := Date today.
 		filteredIssues := filteredIssues select: [ :issue |
-			issue dueDate notNil and: [ 
-				issue dueDate asDate = Date today ] ] ].
+			| startDate endDate |
+			startDate := issue computedStartDate.
+			endDate := issue computedDueDate.
+			startDate notNil and: [ endDate notNil and: [
+				"Issue is active today if today falls between start and end dates"
+				today between: startDate asDate and: endDate asDate ] ] ] ].
 	
 	toolbar dueDateFilter = #week ifTrue: [
 		| today weekFromNow |
 		today := Date today.
 		weekFromNow := today addDays: 7.
 		filteredIssues := filteredIssues select: [ :issue |
-			issue dueDate notNil and: [
-				issue dueDate asDate between: today and: weekFromNow ] ] ].
+			| startDate endDate |
+			startDate := issue computedStartDate.
+			endDate := issue computedDueDate.
+			startDate notNil and: [ endDate notNil and: [
+				"Issue is active this week if it overlaps with the week period"
+				(startDate asDate <= weekFromNow) and: [ endDate asDate >= today ] ] ] ] ].
 	
 	issueList items: filteredIssues
 ]
