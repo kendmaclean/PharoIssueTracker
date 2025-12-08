@@ -6,7 +6,9 @@ Class {
 		'ganttCanvas',
 		'detailsForm',
 		'issues',
-		'currentIssue'
+		'currentIssue',
+		'moveUpButton',
+		'moveDownButton'
 	],
 	#category : 'IssueTracker',
 	#package : 'IssueTracker'
@@ -287,16 +289,24 @@ IssueTrackerGanttPresenter >> currentIssue [
 
 { #category : 'initialization' }
 IssueTrackerGanttPresenter >> defaultLayout [
-	^ SpBoxLayout newTopToBottom
-		spacing: 0;
-		add: toolbar expand: false;
-		add: (SpPanedLayout newTopToBottom
-			positionOfSlider: 0.6;
-			add: ganttCanvas;
-			add: detailsForm;
-			yourself);
-		yourself
-
+    ^ SpBoxLayout newTopToBottom
+        spacing: 0;
+        add: toolbar expand: false;
+        add: (SpBoxLayout newLeftToRight
+            spacing: 5;
+            add: (SpPanedLayout newTopToBottom
+                positionOfSlider: 0.6;
+                add: ganttCanvas;
+                add: detailsForm;
+                yourself);
+            add: (SpBoxLayout newTopToBottom
+                spacing: 5;
+                add: moveUpButton expand: false;
+                add: moveDownButton expand: false;
+                addLast: '';  "spacer"
+                yourself) width: 100;
+            yourself);
+        yourself
 ]
 
 { #category : 'initialization' }
@@ -379,14 +389,31 @@ IssueTrackerGanttPresenter >> hasCurrentIssue [
 
 { #category : 'initialization' }
 IssueTrackerGanttPresenter >> initializePresenters [
-	issues := IssueRepository uniqueInstance allIssues.
-	currentIssue := nil.
-	
-	toolbar := self instantiate: IssueToolbarPresenter.
-	detailsForm := self instantiate: IssueDetailsPresenter.
-	ganttCanvas := self instantiate: SpRoassalPresenter.
-	
-	self buildGanttChart
+    issues := IssueRepository uniqueInstance allIssues.
+    currentIssue := nil.
+    
+    toolbar := self instantiate: IssueToolbarPresenter.
+    detailsForm := self instantiate: IssueDetailsPresenter.
+    ganttCanvas := self instantiate: SpRoassalPresenter.
+    
+    "Add reordering buttons"
+    moveUpButton := self newButton
+        label: '↑ Move Up';
+        icon: (self iconNamed: #up);
+        help: 'Move selected issue up in order';
+        action: [ self moveIssueUp ];
+        enabled: false;
+        yourself.
+    
+    moveDownButton := self newButton
+        label: '↓ Move Down';
+        icon: (self iconNamed: #down);
+        help: 'Move selected issue down in order';
+        action: [ self moveIssueDown ];
+        enabled: false;
+        yourself.
+    
+    self buildGanttChart
 ]
 
 { #category : 'initialization' }
@@ -415,11 +442,52 @@ IssueTrackerGanttPresenter >> manageDependenciesFor: anIssue [
 ]
 
 { #category : 'initialization' }
+IssueTrackerGanttPresenter >> moveIssueDown [
+    | repository allIssues currentIndex itemToMove |
+    currentIssue ifNil: [ ^ self ].
+    
+    itemToMove := currentIssue.
+    repository := IssueRepository uniqueInstance.
+    allIssues := repository allIssues.
+    currentIndex := allIssues indexOf: itemToMove.
+    
+    currentIndex < allIssues size ifTrue: [
+        "Swap directly in the repository's internal collection"
+        repository swapIssueAt: currentIndex with: currentIndex + 1.
+        
+        "Rebuild the Gantt chart"
+        currentIssue := itemToMove.  "Maintain selection"
+        self updateGanttChart.
+        self updateMoveButtonsState ]
+]
+
+{ #category : 'initialization' }
+IssueTrackerGanttPresenter >> moveIssueUp [
+    | repository allIssues currentIndex itemToMove |
+    currentIssue ifNil: [ ^ self ].
+    
+    itemToMove := currentIssue.
+    repository := IssueRepository uniqueInstance.
+    allIssues := repository allIssues.
+    currentIndex := allIssues indexOf: itemToMove.
+    
+    currentIndex > 1 ifTrue: [
+        "Swap directly in the repository's internal collection"
+        repository swapIssueAt: currentIndex with: currentIndex - 1.
+        
+        "Rebuild the Gantt chart"
+        currentIssue := itemToMove.  "Maintain selection"
+        self updateGanttChart.
+        self updateMoveButtonsState ]
+]
+
+{ #category : 'initialization' }
 IssueTrackerGanttPresenter >> onIssueSelected: anIssue [
-	currentIssue := anIssue.
-	detailsForm loadIssue: anIssue.
-	detailsForm ensureDependenciesInitialized.    "Added this line"
-	detailsForm loadDependencies: anIssue
+    currentIssue := anIssue.
+    detailsForm loadIssue: anIssue.
+    detailsForm ensureDependenciesInitialized.
+    detailsForm loadDependencies: anIssue.
+    self updateMoveButtonsState
 ]
 
 { #category : 'initialization' }
@@ -472,4 +540,21 @@ IssueTrackerGanttPresenter >> showEmptyMessageOn: rsCanvas [
 IssueTrackerGanttPresenter >> updateGanttChart [
 	"Rebuild the Gantt chart"
 	self buildGanttChart
+]
+
+{ #category : 'initialization' }
+IssueTrackerGanttPresenter >> updateMoveButtonsState [
+    "Enable/disable move buttons based on selection position"
+    | allIssues currentIndex |
+    
+    currentIssue ifNil: [
+        moveUpButton enabled: false.
+        moveDownButton enabled: false.
+        ^ self ].
+    
+    allIssues := IssueRepository uniqueInstance allIssues.
+    currentIndex := allIssues indexOf: currentIssue.
+    
+    moveUpButton enabled: currentIndex > 1.
+    moveDownButton enabled: currentIndex < allIssues size
 ]
