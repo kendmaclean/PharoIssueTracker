@@ -15,7 +15,8 @@ Class {
 		'issues',
 		'currentIssue',
 		'moveUpButton',
-		'moveDownButton'
+		'moveDownButton',
+		'viewSwitchButton'
 	],
 	#category : 'IssueTracker',
 	#package : 'IssueTracker'
@@ -28,6 +29,31 @@ IssueTrackerPresenter class >> open [
 ]
 
 { #category : 'initialization' }
+IssueTrackerPresenter >> buildContextMenu [
+    | menu selectedIssue |
+    
+    "Get the currently selected issue"
+    selectedIssue := issueList selection selectedItem.
+    selectedIssue ifNil: [ ^ nil ].  "No menu if nothing selected"
+    
+    menu := self newMenu.
+    
+    menu addItem: [ :item |
+        item
+            name: 'Manage Dependencies...';
+            icon: (self iconNamed: #link);
+            action: [ self openDependencyDialogFor: selectedIssue ] ].
+    
+    menu addItem: [ :item |
+        item
+            name: 'Delete Issue';
+            icon: (self iconNamed: #delete);
+            action: [ self deleteIssue: selectedIssue ] ].
+    
+    ^ menu
+]
+
+{ #category : 'initialization' }
 IssueTrackerPresenter >> currentIssue [
     ^ currentIssue
 ]
@@ -37,7 +63,12 @@ IssueTrackerPresenter >> defaultLayout [
 
 	^ SpBoxLayout newTopToBottom
 		  spacing: 5;
-		  add: toolbar expand: false;
+		  add: (SpBoxLayout newLeftToRight
+				   spacing: 5;
+				   add: toolbar;
+				   add: viewSwitchButton width: 100;
+				   yourself)
+		  expand: false;
 		  add: (SpBoxLayout newLeftToRight
 				   spacing: 5;
 				   add: issueList;
@@ -63,6 +94,21 @@ IssueTrackerPresenter >> deleteCurrentIssue [
 			detailsForm clearForm.
 			currentIssue := nil.
 			self updateIssueList ] ]
+]
+
+{ #category : 'initialization' }
+IssueTrackerPresenter >> deleteIssue: anIssue [
+    "Delete the given issue after confirmation"
+    | confirm |
+    confirm := UIManager default 
+        confirm: 'Are you sure you want to delete "', anIssue title, '"?'
+        label: 'Confirm Delete'.
+    
+    confirm ifTrue: [
+        IssueRepository uniqueInstance removeIssue: anIssue.
+        currentIssue := nil.
+        detailsForm loadIssue: nil.  "Use loadIssue: nil instead of clear"
+        self issueListChanged ]
 ]
 
 { #category : 'initialization' }
@@ -98,6 +144,14 @@ IssueTrackerPresenter >> initializePresenters [
     issueList := self newTable.
     detailsForm := self instantiate: IssueDetailsPresenter.
     
+    "Add view switch button"
+    viewSwitchButton := self newButton
+        label: 'Gantt View';
+        icon: (self iconNamed: #glamorousTable);
+        help: 'Switch to Gantt chart view';
+        action: [ self switchToGanttView ];
+        yourself.
+    
     "Add reordering buttons"
     moveUpButton := self newButton
         label: '↑';
@@ -130,7 +184,9 @@ IssueTrackerPresenter >> initializePresenters [
                     ifNil: [ '' ] 
                     ifNotNil: [ :date | date asDate asString ] ]) width: 120; yourself);
         items: issues;
-        beResizable.
+        beResizable;
+        contextMenu: [ self buildContextMenu ];  "Add context menu"
+        yourself.
     
     issueList whenSelectionChangedDo: [ :selection | 
         selection selectedItem ifNotNil: [ :selectedIssue |
@@ -151,8 +207,10 @@ IssueTrackerPresenter >> initializeWindow: aWindowPresenter [
 
 { #category : 'initialization' }
 IssueTrackerPresenter >> issueListChanged [
-	issues := IssueRepository uniqueInstance allIssues.
-	self updateIssueList
+    "Refresh the issue list from the repository"
+    issues := IssueRepository uniqueInstance allIssues.
+    issueList items: issues.
+    self updateMoveButtonsState
 ]
 
 { #category : 'initialization' }
@@ -205,6 +263,14 @@ IssueTrackerPresenter >> onIssueSelected: anIssue [
 ]
 
 { #category : 'initialization' }
+IssueTrackerPresenter >> openDependencyDialogFor: anIssue [
+    "Open the dependency dialog for the given issue"
+    IssueDependencyDialog openFor: anIssue.
+    "Refresh after dialog closes"
+    self issueListChanged
+]
+
+{ #category : 'initialization' }
 IssueTrackerPresenter >> reorderIssue: draggedIssue dropItem: targetIssue [
     "Reorder the issue in the repository when dropped on another issue"
     | allIssues dragIndex targetIndex |
@@ -222,6 +288,15 @@ IssueTrackerPresenter >> reorderIssue: draggedIssue dropItem: targetIssue [
     
     "Keep selection"
     issueList selectItem: draggedIssue
+]
+
+{ #category : 'initialization' }
+IssueTrackerPresenter >> switchToGanttView [
+    "Close current window and open Gantt view"
+    | ganttPresenter |
+    ganttPresenter := IssueTrackerGanttPresenter new.
+    ganttPresenter open.
+    self window close
 ]
 
 { #category : 'initialization' }

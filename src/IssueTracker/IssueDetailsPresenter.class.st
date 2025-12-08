@@ -125,72 +125,36 @@ IssueDetailsPresenter >> autoCalculateDates [
 
 { #category : 'initialization' }
 IssueDetailsPresenter >> buildLayoutWithDependencies: showDeps [
-	| boxLayout dependenciesSection |
-	boxLayout := SpBoxLayout newTopToBottom
-		             spacing: 8;
-		             add: 'Issue Details' expand: false;
-		             add: (SpBoxLayout newLeftToRight
-				              add: 'Title:' width: 80;
-				              add: titleInput;
-				              yourself)
-		             expand: false;
-		             add: (SpBoxLayout newLeftToRight
-				              add: 'Priority:' width: 80;
-				              add: priorityDropdown width: 120;
-				              add: 'Status:' width: 80;
-				              add: statusDropdown width: 120;
-				              yourself)
-		             expand: false;
-		             add: (SpBoxLayout newLeftToRight
-				              add: 'Start Date:' width: 80;
-				              add: startDateInput;
-				              add: 'Duration:' width: 80;
-				              add: durationInput width: 100;
-				              add: 'Due Date:' width: 80;
-				              add: dueDateInput;
-				              yourself)
-		             expand: false;
-		             add: 'Description:' expand: false;
-		             add: descriptionInput height: 80;
-		             yourself.
-
-	"Conditionally add dependencies section with buttons on the right"
-	showDeps ifTrue: [
-		dependenciesSection := SpBoxLayout newLeftToRight
-			spacing: 8;
-			add: (SpBoxLayout newTopToBottom
-				spacing: 4;
-				add: 'Dependencies (this issue depends on):' expand: false;
-				add: dependenciesList;
-				yourself);
-			add: (SpBoxLayout newTopToBottom
-				spacing: 5;
-				add: addDependencyButton expand: false;
-				add: removeDependencyButton expand: false;
-				addLast: '' "spacer";
-				yourself) width: 140;
-			yourself.
-		
-		boxLayout add: dependenciesSection height: 150 ].
-
-	"Add dependency buttons separately if no dependencies shown"
-	showDeps ifFalse: [
-		boxLayout
-			add: (SpBoxLayout newLeftToRight
-				spacing: 5;
-				add: addDependencyButton;
-				yourself)
-			expand: false ].
-
-	boxLayout
-		add: (SpBoxLayout newLeftToRight
-			spacing: 5;
-			add: addButton;
-			add: deleteButton;
-			yourself)
-		expand: false.
-
-	^ boxLayout
+    "Simplified layout without dependencies section"
+    ^ SpBoxLayout newTopToBottom
+        spacing: 8;
+        add: 'Issue Details' expand: false;
+        add: (SpBoxLayout newLeftToRight
+            add: 'Title:' width: 80;
+            add: titleInput;
+            yourself) expand: false;
+        add: (SpBoxLayout newLeftToRight
+            add: 'Priority:' width: 80;
+            add: priorityDropdown width: 120;
+            add: 'Status:' width: 80;
+            add: statusDropdown width: 120;
+            yourself) expand: false;
+        add: (SpBoxLayout newLeftToRight
+            add: 'Start Date:' width: 80;
+            add: startDateInput;
+            add: 'Duration:' width: 80;
+            add: durationInput width: 100;
+            add: 'Due Date:' width: 80;
+            add: dueDateInput;
+            yourself) expand: false;
+        add: 'Description:' expand: false;
+        add: descriptionInput height: 80;
+        add: (SpBoxLayout newLeftToRight
+            spacing: 5;
+            add: addButton;
+            add: deleteButton;
+            yourself) expand: false;
+        yourself
 ]
 
 { #category : 'initialization' }
@@ -300,27 +264,20 @@ IssueDetailsPresenter >> descriptionText [
 
 { #category : 'initialization' }
 IssueDetailsPresenter >> ensureDependenciesInitialized [
-	"Ensure dependencies list is initialized if not already done"
-	dependenciesList ifNil: [
-		dependenciesList := self newTable.
-		dependenciesList 
-			addColumn: ((SpStringTableColumn 
-				title: 'Dependencies' 
-				evaluated: [ :anIssue | anIssue title ]) yourself);
-			beResizable.
-		
-		addDependencyButton := self newButton
-			label: 'Add';
-			icon: (self iconNamed: #link);
-			action: [ self addDependency ];
-			yourself.
-		
-		removeDependencyButton := self newButton
-			label: 'Remove';
-			icon: (self iconNamed: #delete);
-			action: [ self removeDependencySelected ];
-			yourself ]
-
+    "Initialize dependency buttons only (no list display)"
+    addDependencyButton ifNil: [
+        addDependencyButton := self newButton
+            label: 'Add';
+            icon: (self iconNamed: #link);
+            action: [ self addDependency ];
+            yourself ].
+    
+    removeDependencyButton ifNil: [
+        removeDependencyButton := self newButton
+            label: 'Remove';
+            icon: (self iconNamed: #delete);
+            action: [ self removeDependencySelected ];
+            yourself ]
 ]
 
 { #category : 'initialization' }
@@ -385,37 +342,22 @@ IssueDetailsPresenter >> initializePresenters [
 		                icon: (self iconNamed: #delete);
 		                action: [ self deleteIssue ];
 		                yourself.
-		
+
 	"Dependencies UI components"
 	dependenciesList := self newTable.
-	dependenciesList 
-	    addColumn: ((SpStringTableColumn 
-	        title: 'Dependencies' 
-	        evaluated: [ :anIssue | anIssue title ]) yourself);
-	    beResizable.
+	dependenciesList
+		addColumn: (SpStringTableColumn
+				 title: 'Dependencies'
+				 evaluated: [ :anIssue | anIssue title ]) yourself;
+		beResizable.
 
-	addDependencyButton := self newButton
-	    label: 'Add Dependency';
-	    icon: (self iconNamed: #link);
-	    action: [ self addDependency ];
-	    yourself.
 
-	removeDependencyButton := self newButton
-	    label: 'Remove';
-	    icon: (self iconNamed: #delete);
-	    action: [ self removeDependencySelected ];
-	    yourself
 ]
 
 { #category : 'initialization' }
 IssueDetailsPresenter >> loadDependencies: anIssue [
-    anIssue ifNil: [ 
-        dependenciesList items: #().
-        self updateDependenciesVisibility.
-        ^ self ].
-    
-    dependenciesList items: anIssue dependencies.
-    self updateDependenciesVisibility
+    "Dependencies are managed via dialog, not displayed in form"
+    ^ self
 ]
 
 { #category : 'initialization' }
@@ -559,11 +501,6 @@ IssueDetailsPresenter >> updateButtonStates [
 
 { #category : 'initialization' }
 IssueDetailsPresenter >> updateDependenciesVisibility [
-    "Rebuild layout with or without dependencies section"
-    | currentIssue hasDeps |
-    
-    currentIssue := self owner currentIssue.
-    hasDeps := currentIssue notNil and: [ currentIssue hasDependencies ].
-    
-    self layout: (self buildLayoutWithDependencies: hasDeps)
+    "Dependencies are now managed via dialog only, not shown in form"
+    self layout: (self buildLayoutWithDependencies: false)
 ]

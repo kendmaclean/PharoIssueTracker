@@ -8,7 +8,8 @@ Class {
 		'issues',
 		'currentIssue',
 		'moveUpButton',
-		'moveDownButton'
+		'moveDownButton',
+		'viewSwitchButton'
 	],
 	#category : 'IssueTracker',
 	#package : 'IssueTracker'
@@ -291,7 +292,11 @@ IssueTrackerGanttPresenter >> currentIssue [
 IssueTrackerGanttPresenter >> defaultLayout [
     ^ SpBoxLayout newTopToBottom
         spacing: 0;
-        add: toolbar expand: false;
+        add: (SpBoxLayout newLeftToRight
+            spacing: 5;
+            add: toolbar;
+            add: viewSwitchButton width: 100;
+            yourself) expand: false;
         add: (SpBoxLayout newLeftToRight
             spacing: 5;
             add: (SpPanedLayout newTopToBottom
@@ -395,6 +400,14 @@ IssueTrackerGanttPresenter >> initializePresenters [
     toolbar := self instantiate: IssueToolbarPresenter.
     detailsForm := self instantiate: IssueDetailsPresenter.
     ganttCanvas := self instantiate: SpRoassalPresenter.
+    
+    "Add view switch button"
+    viewSwitchButton := self newButton
+        label: 'Table View';
+        icon: (self iconNamed: #smallConfiguration);
+        help: 'Switch to table view';
+        action: [ self switchToTableView ];
+        yourself.
     
     "Add reordering buttons"
     moveUpButton := self newButton
@@ -534,6 +547,15 @@ IssueTrackerGanttPresenter >> showEmptyMessageOn: rsCanvas [
 		yourself.
 	rsCanvas add: label.
 	^ rsCanvas
+]
+
+{ #category : 'initialization' }
+IssueTrackerGanttPresenter >> switchToTableView [
+    "Close current window and open table view"
+    | tablePresenter |
+    tablePresenter := IssueTrackerPresenter new.
+    tablePresenter open.
+    self window close
 ]
 
 { #category : 'initialization' }
