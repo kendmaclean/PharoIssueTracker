@@ -12,5 +12,6 @@ TIssueTrackerTrait >> colorForStatus: aStatus [
 	aStatus = #inProgress ifTrue: [ ^ Color orange ].
 	aStatus = #resolved ifTrue: [ ^ Color green ].
 	aStatus = #closed ifTrue: [ ^ Color gray ].
+	aStatus = #milestone ifTrue: [ ^ Color yellow ].
 	^ Color black
 ]

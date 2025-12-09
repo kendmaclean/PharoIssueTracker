@@ -11,7 +11,8 @@ Class {
 		'dueDate',
 		'startDate',
 		'duration',
-		'dependencies'
+		'dependencies',
+		'isMilestone'
 	],
 	#category : 'IssueTracker',
 	#package : 'IssueTracker'
@@ -189,12 +190,25 @@ Issue >> id: anObject [
 
 { #category : 'initialization' }
 Issue >> initialize [
-    super initialize.
-    id := UUID new asString.
-    createdAt := DateAndTime now.
-    status := #open.
-    priority := #medium.
-    dependencies := OrderedCollection new
+
+	super initialize.
+	id := UUID new asString.
+	createdAt := DateAndTime now.
+	status := #open.
+	priority := #medium.
+	dependencies := OrderedCollection new.
+	isMilestone := false.
+]
+
+{ #category : 'initialization' }
+Issue >> isMilestone [
+    ^ isMilestone ifNil: [ false ]
+]
+
+{ #category : 'initialization' }
+Issue >> isMilestone: aBoolean [
+    isMilestone := aBoolean
+
 ]
 
 { #category : 'accessing' }

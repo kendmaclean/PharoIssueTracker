@@ -166,9 +166,9 @@ IssueTrackerGanttPresenter >> buildGanttOn: rsCanvas [
 	shapes := OrderedCollection new.
 	issueShapeMap := Dictionary new.
 
-	"Create bars for each issue"
+	"Create bars/diamonds for each issue"
 	filteredIssues withIndexDo: [ :issue :index |
-		| bar width label composite startDays endDays startX hasDelayDue originalStart |
+		| shape width label composite startDays endDays startX hasDelayDue originalStart isMilestone |
 		startDays := issue dependencyAwareStartDate julianDayNumber
 		             - baselineDate julianDayNumber.
 		endDays := issue dependencyAwareEndDate julianDayNumber
@@ -180,65 +180,89 @@ IssueTrackerGanttPresenter >> buildGanttOn: rsCanvas [
 
 		startX := leftMargin + (startDays * 20).
 		width := (endDays - startDays max: 1) * 20.
+		
+		"Check if this is a milestone (by status)"
+		isMilestone := issue status = #milestone.
 
-		"Create clickable bar"
-		bar := RSBox new
-			       width: width;
-			       height: 25;
-			       color: (hasDelayDue
-					        ifTrue: [ (self colorForStatus: issue status) darker ]
-					        ifFalse: [ self colorForStatus: issue status ]);
-			       model: issue;
-			       yourself.
+		"Create shape based on type"
+		isMilestone ifTrue: [
+			"Create diamond for milestone"
+			shape := RSPolygon new
+				points: { 0@(-15). 15@0. 0@15. -15@0 };  "Diamond points"
+				color: Color yellow;
+				border: (RSBorder new 
+					color: (hasDelayDue ifTrue: [ Color red ] ifFalse: [ Color black ]); 
+					width: 2);
+				model: issue;
+				yourself.
+		] ifFalse: [
+			"Create regular bar for normal issues"
+			shape := RSBox new
+				width: width;
+				height: 25;
+				color: (hasDelayDue
+					ifTrue: [ (self colorForStatus: issue status) darker ]
+					ifFalse: [ self colorForStatus: issue status ]);
+				model: issue;
+				yourself.
 
-		hasDelayDue ifTrue: [
-			bar border: (RSBorder new
-					 color: Color red;
-					 width: 2) ].
+			hasDelayDue ifTrue: [
+				shape border: (RSBorder new
+					color: Color red;
+					width: 2) ].
 
-		bar translateBy: width / 2 @ 0.
+			shape translateBy: width / 2 @ 0.
+		].
 
 		"Create label"
 		label := RSLabel new
-			         text: (hasDelayDue
-					          ifTrue: [ issue title , ' (delayed)' ]
-					          ifFalse: [ issue title ]);
-			         fontSize: 10;
-			         yourself.
+			text: (isMilestone
+				ifTrue: [ '◆ ' , issue title , 
+					(hasDelayDue ifTrue: [ ' (delayed)' ] ifFalse: [ '' ]) ]
+				ifFalse: [ 
+					hasDelayDue
+						ifTrue: [ issue title , ' (delayed)' ]
+						ifFalse: [ issue title ] ]);
+			fontSize: 10;
+			yourself.
 
-		label translateBy: width + 10 @ 0.
+		label translateBy: (isMilestone 
+			ifTrue: [ 20 @ 0 ]  "Position label to right of diamond"
+			ifFalse: [ width + 10 @ 0 ]).  "Position label to right of bar"
 
 		"Create composite"
 		composite := RSComposite new
-			             shapes: {
-					             bar.
-					             label };
-			             model: issue;
-			             yourself.
+			shapes: {
+				shape.
+				label };
+			model: issue;
+			yourself.
 
 		composite translateBy: startX @ ((index - 1) * 35).
 
 		shapes add: composite.
-		issueShapeMap at: issue put: bar.
+		issueShapeMap at: issue put: shape.
 
 		"Add click handler to select issue"
-		bar
+		shape
 			when: RSMouseClick
 			do: [ :evt | self onIssueSelected: issue ]
 			for: self.
 
 		"Add right-click context menu"
-		bar
+		shape
 			when: RSMouseRightClick
 			do: [ :evt | self showContextMenuFor: issue at: evt ]
 			for: self.
 
 		"Add tooltip"
-		bar @ (RSPopup text: [ :i |
+		shape @ (RSPopup text: [ :i |
 			 | tooltip |
 			 tooltip := i title , String cr , 'Status: ' , i status asString
 			            , String cr , 'Priority: ' , i priority asString
 			            , String cr.
+			 isMilestone ifTrue: [
+				 tooltip := tooltip , 'Type: Milestone' , String cr ].
 			 originalStart ifNotNil: [
 				 tooltip := tooltip , 'Original Start: ' , originalStart asString
 				            , String cr ].

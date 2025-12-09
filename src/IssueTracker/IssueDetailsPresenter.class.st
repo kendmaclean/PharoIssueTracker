@@ -333,7 +333,7 @@ IssueDetailsPresenter >> initializePresenters [
 	priorityDropdown whenSelectedItemChangedDo: [ self onFieldChanged ].
 	"Status"
 	statusDropdown := self newDropList
-		                  items: #( open inProgress resolved closed );
+		                  items: #( open inProgress resolved closed milestone );
 		                  selectIndex: 1;
 		                  yourself.
 	statusDropdown whenSelectedItemChangedDo: [ self onFieldChanged ].
