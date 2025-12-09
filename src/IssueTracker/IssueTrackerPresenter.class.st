@@ -16,7 +16,8 @@ Class {
 		'currentIssue',
 		'moveUpButton',
 		'moveDownButton',
-		'viewSwitchButton'
+		'viewSwitchButton',
+		'updateTask'
 	],
 	#category : 'IssueTracker',
 	#package : 'IssueTracker'
@@ -124,7 +125,16 @@ IssueTrackerPresenter >> fieldChanged [
         issue startDate: detailsForm selectedStartDate.
         issue duration: detailsForm selectedDuration.
         issue dueDate: detailsForm selectedDueDate.
-        self updateIssueList ]
+        
+        "Cancel previous update task"
+        updateTask ifNotNil: [ updateTask terminate ].
+        
+        "Schedule new update after 300ms delay"
+        updateTask := [ 
+            300 milliSeconds wait.
+            self updateIssueList.
+            updateTask := nil 
+        ] forkAt: Processor userBackgroundPriority ]
 ]
 
 { #category : 'initialization' }

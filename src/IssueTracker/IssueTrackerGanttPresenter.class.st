@@ -9,7 +9,8 @@ Class {
 		'currentIssue',
 		'moveUpButton',
 		'moveDownButton',
-		'viewSwitchButton'
+		'viewSwitchButton',
+		'updateTask'
 	],
 	#category : 'IssueTracker',
 	#package : 'IssueTracker'
