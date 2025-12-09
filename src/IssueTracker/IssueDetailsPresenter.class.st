@@ -15,7 +15,8 @@ Class {
 		'lastChangedField',
 		'dependenciesList',
 		'addDependencyButton',
-		'removeDependencyButton'
+		'removeDependencyButton',
+		'userSetStartDate'
 	],
 	#category : 'IssueTracker',
 	#package : 'IssueTracker'
@@ -64,63 +65,59 @@ IssueDetailsPresenter >> addDependency [
 
 { #category : 'initialization' }
 IssueDetailsPresenter >> autoCalculateDates [
-    "Auto-calculate the appropriate field based on what was last changed"
-    | startDate duration dueDate |
-    
-    isLoadingIssue ifTrue: [ ^ self ].
-    
-    startDate := startDateInput date.
-    duration := self selectedDuration.
-    dueDate := dueDateInput date.
-    
-    "Determine what to calculate based on last changed field"
-    lastChangedField = #startDate ifTrue: [
-        "Start date changed: calculate due date if we have duration"
-        (startDate notNil and: [ duration notNil and: [ duration > 0 ] ]) ifTrue: [
-            isLoadingIssue := true.
-            dueDateInput date: (startDate asDate addDays: duration).
-            self markAsAutoCalculated: dueDateInput.
-            isLoadingIssue := false.
-            ^ self onFieldChanged ] ].
-    
-    lastChangedField = #duration ifTrue: [
-        "Duration changed: prefer calculating due date from start, but if no start, calculate start from due"
-        (startDate notNil and: [ duration notNil and: [ duration > 0 ] ]) ifTrue: [
-            isLoadingIssue := true.
-            dueDateInput date: (startDate asDate addDays: duration).
-            self markAsAutoCalculated: dueDateInput.
-            isLoadingIssue := false.
-            ^ self onFieldChanged ].
-        
-        (dueDate notNil and: [ duration notNil and: [ duration > 0 ] ]) ifTrue: [
-            isLoadingIssue := true.
-            startDateInput date: (dueDate asDate subtractDays: duration).
-            self markAsAutoCalculated: startDateInput.
-            isLoadingIssue := false.
-            ^ self onFieldChanged ] ].
-    
-    lastChangedField = #dueDate ifTrue: [
-        "Due date changed: calculate start date if we have duration, or duration if we have start"
-        (dueDate notNil and: [ duration notNil and: [ duration > 0 ] ]) ifTrue: [
-            isLoadingIssue := true.
-            startDateInput date: (dueDate asDate subtractDays: duration).
-            self markAsAutoCalculated: startDateInput.
-            isLoadingIssue := false.
-            ^ self onFieldChanged ].
-        
-        (dueDate notNil and: [ startDate notNil ]) ifTrue: [
-            | calculatedDuration |
-            calculatedDuration := dueDate asDate julianDayNumber - startDate asDate julianDayNumber.
-            calculatedDuration := calculatedDuration max: 0.
-            isLoadingIssue := true.
-            durationInput text: calculatedDuration asString.
-            self markAsAutoCalculatedText: durationInput.
-            isLoadingIssue := false.
-            ^ self onFieldChanged ] ].
-    
-    "Clear markers if we can't calculate anything"
-    self clearAutoCalculatedMarkers.
-    self onFieldChanged
+	"Auto-calculate the appropriate field based on what was last changed"
+
+	| startDate duration dueDate |
+	isLoadingIssue ifTrue: [ ^ self ].
+
+	startDate := startDateInput date.
+	duration := self selectedDuration.
+	dueDate := dueDateInput date.
+
+	"Determine what to calculate based on last changed field"
+	lastChangedField = #startDate ifTrue: [ "Start date changed: calculate due date if we have duration"
+		(startDate notNil and: [ duration notNil and: [ duration > 0 ] ])
+			ifTrue: [
+				isLoadingIssue := true.
+				dueDateInput date: (startDate asDate addDays: duration).
+				self markAsAutoCalculated: dueDateInput.
+				isLoadingIssue := false.
+				^ self onFieldChanged ] ].
+
+	lastChangedField = #duration ifTrue: [ "If user HASN'T set start date, calculate it from due date"
+		((userSetStartDate ifNil: [ false ]) not and: [ 
+			 dueDate notNil and: [ duration notNil ] ]) ifTrue: [
+			startDateInput date: (dueDate asDate subtractDays: duration).
+			^ self onFieldChanged ].
+
+		"Otherwise calculate due date from start date"
+		(startDate notNil and: [ duration notNil ]) ifTrue: [
+			dueDateInput date: (startDate asDate addDays: duration).
+			^ self onFieldChanged ] ].
+
+	lastChangedField = #dueDate ifTrue: [ "Due date changed: calculate start date if we have duration, or duration if we have start"
+		(dueDate notNil and: [ duration notNil and: [ duration > 0 ] ])
+			ifTrue: [
+				isLoadingIssue := true.
+				startDateInput date: (dueDate asDate subtractDays: duration).
+				self markAsAutoCalculated: startDateInput.
+				isLoadingIssue := false.
+				^ self onFieldChanged ].
+
+		(dueDate notNil and: [ startDate notNil ]) ifTrue: [
+			| calculatedDuration |
+			calculatedDuration := dueDate asDate julianDayNumber
+			                      - startDate asDate julianDayNumber.
+			calculatedDuration := calculatedDuration max: 0.
+			isLoadingIssue := true.
+			durationInput text: calculatedDuration asString.
+			self markAsAutoCalculatedText: durationInput.
+			isLoadingIssue := false.
+			^ self onFieldChanged ] ].
+
+	"Clear markers if we can't calculate anything"
+	self clearAutoCalculatedMarkers.
+	self onFieldChanged
 ]
 
 { #category : 'initialization' }
@@ -176,6 +173,7 @@ IssueDetailsPresenter >> clearAutoCalculatedMarkers [
 
 { #category : 'initialization' }
 IssueDetailsPresenter >> clearForm [
+
 	titleInput text: ''.
 	descriptionInput text: ''.
 	startDateInput date: Date today.
@@ -307,10 +305,12 @@ IssueDetailsPresenter >> initializePresenters [
 		                    placeholder: 'Description...';
 		                    yourself.
 	descriptionInput whenTextChangedDo: [ self onFieldChanged ].
+
 	"Start Date - default to today"
 	startDateInput := self instantiate: SpDatePresenter.
 	startDateInput date: Date today.
 	startDateInput whenDateChanged: [
+		userSetStartDate := true.
 		lastChangedField := #startDate.
 		self autoCalculateDates ].
 	"Duration (in days) - use text input instead"
@@ -356,9 +356,7 @@ IssueDetailsPresenter >> initializePresenters [
 		addColumn: (SpStringTableColumn
 				 title: 'Dependencies'
 				 evaluated: [ :anIssue | anIssue title ]) yourself;
-		beResizable.
-
-
+		beResizable
 ]
 
 { #category : 'initialization' }
@@ -377,6 +375,7 @@ IssueDetailsPresenter >> loadDependencies: anIssue [
 
 { #category : 'initialization' }
 IssueDetailsPresenter >> loadIssue: anIssue [
+
 	isLoadingIssue := true.
 	lastChangedField := nil.
 	anIssue ifNotNil: [
@@ -385,9 +384,9 @@ IssueDetailsPresenter >> loadIssue: anIssue [
 		statusDropdown selectItem: anIssue status.
 		priorityDropdown selectItem: anIssue priority.
 		startDateInput date: anIssue startDate.
-		durationInput text: (anIssue duration 
-			ifNil: [ '' ]
-			ifNotNil: [ :d | d asString ]).
+		userSetStartDate := anIssue startDate notNil. 
+		durationInput text:
+			(anIssue duration ifNil: [ '' ] ifNotNil: [ :d | d asString ]).
 		dueDateInput date: anIssue dueDate ].
 	self clearAutoCalculatedMarkers.
 	isLoadingIssue := false.
