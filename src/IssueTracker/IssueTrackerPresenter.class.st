@@ -60,28 +60,30 @@ IssueTrackerPresenter >> currentIssue [
 
 { #category : 'initialization' }
 IssueTrackerPresenter >> defaultLayout [
-
-	^ SpBoxLayout newTopToBottom
-		  spacing: 5;
-		  add: (SpBoxLayout newLeftToRight
-				   spacing: 5;
-				   add: toolbar;
-				   add: viewSwitchButton width: 100;
-				   yourself)
-		  expand: false;
-		  add: (SpBoxLayout newLeftToRight
-				   spacing: 5;
-				   add: issueList;
-				   add: (SpBoxLayout newTopToBottom
-						    spacing: 5;
-						    add: moveUpButton expand: false;
-						    add: moveDownButton expand: false;
-						    addLast: '';
-						    "spacer"yourself)
-				   width: 50;
-				   yourself);
-		  add: detailsForm height: 280;
-		  yourself
+    ^ SpBoxLayout newTopToBottom
+        spacing: 5;
+        add: (SpBoxLayout newLeftToRight
+            spacing: 5;
+            add: toolbar;
+            add: viewSwitchButton width: 100;
+            yourself)
+        expand: false;
+        add: (SpBoxLayout newLeftToRight
+            spacing: 5;
+            add: (SpPanedLayout newTopToBottom
+                positionOfSlider: 0.6;  "Same as Gantt view"
+                add: issueList;
+                add: detailsForm;
+                yourself);
+            add: (SpBoxLayout newTopToBottom
+                spacing: 5;
+                add: moveUpButton expand: false;
+                add: moveDownButton expand: false;
+                addLast: '';  "spacer"
+                yourself)
+            width: 50;
+            yourself);
+        yourself
 ]
 
 { #category : 'initialization' }
@@ -137,64 +139,68 @@ IssueTrackerPresenter >> hasCurrentIssue [
 
 { #category : 'initialization' }
 IssueTrackerPresenter >> initializePresenters [
-    issues := IssueRepository uniqueInstance allIssues.
-    currentIssue := nil.
-    
-    toolbar := self instantiate: IssueToolbarPresenter.
-    issueList := self newTable.
-    detailsForm := self instantiate: IssueDetailsPresenter.
-    
-    "Add view switch button"
-    viewSwitchButton := self newButton
-        label: 'Gantt View';
-        icon: (self iconNamed: #glamorousTable);
-        help: 'Switch to Gantt chart view';
-        action: [ self switchToGanttView ];
-        yourself.
-    
-    "Add reordering buttons"
-    moveUpButton := self newButton
-        label: '↑';
-        icon: (self iconNamed: #up);
-        help: 'Move issue up';
-        action: [ self moveIssueUp ];
-        yourself.
-    
-    moveDownButton := self newButton
-        label: '↓';
-        icon: (self iconNamed: #down);
-        help: 'Move issue down';
-        action: [ self moveIssueDown ];
-        yourself.
-    
-    issueList
-        addColumn: ((SpStringTableColumn 
-            title: 'Title' 
-            evaluated: [ :anIssue | anIssue title ]) yourself);
-        addColumn: ((SpStringTableColumn 
-            title: 'Priority' 
-            evaluated: [ :anIssue | anIssue priority asString ]) width: 100; yourself);
-        addColumn: ((SpStringTableColumn 
-            title: 'Status' 
-            evaluated: [ :anIssue | anIssue status asString ]) width: 100; yourself);
-        addColumn: ((SpStringTableColumn 
-            title: 'Due Date' 
-            evaluated: [ :anIssue | 
-                anIssue dueDate 
-                    ifNil: [ '' ] 
-                    ifNotNil: [ :date | date asDate asString ] ]) width: 120; yourself);
-        items: issues;
-        beResizable;
-        contextMenu: [ self buildContextMenu ];  "Add context menu"
-        yourself.
-    
-    issueList whenSelectionChangedDo: [ :selection | 
-        selection selectedItem ifNotNil: [ :selectedIssue |
-            currentIssue := selectedIssue.
-            detailsForm loadIssue: selectedIssue.
-            self updateMoveButtonsState ] ].
-    
-    self updateMoveButtonsState
+
+	issues := IssueRepository uniqueInstance allIssues.
+	currentIssue := nil.
+
+	toolbar := self instantiate: IssueToolbarPresenter.
+	issueList := self newTable.
+	detailsForm := self instantiate: IssueDetailsPresenter.
+
+	"Add view switch button"
+	viewSwitchButton := self newButton
+		                    label: 'Gantt View';
+		                    icon: (self iconNamed: #glamorousTable);
+		                    help: 'Switch to Gantt chart view';
+		                    action: [ self switchToGanttView ];
+		                    yourself.
+
+	"Add reordering buttons"
+	moveUpButton := self newButton
+		                label: '↑';
+		                icon: (self iconNamed: #up);
+		                help: 'Move issue up';
+		                action: [ self moveIssueUp ];
+		                yourself.
+
+	moveDownButton := self newButton
+		                  label: '↓';
+		                  icon: (self iconNamed: #down);
+		                  help: 'Move issue down';
+		                  action: [ self moveIssueDown ].
+
+	issueList
+		addColumn: (SpStringTableColumn
+				 title: 'Title'
+				 evaluated: [ :anIssue | anIssue title ]) yourself;
+		addColumn: ((SpStringTableColumn
+				  title: 'Priority'
+				  evaluated: [ :anIssue | anIssue priority asString ])
+				 width: 100;
+				 yourself);
+		addColumn: ((SpStringTableColumn
+				  title: 'Status'
+				  evaluated: [ :anIssue | anIssue status asString ])
+				 width: 100;
+				 yourself);
+		addColumn:
+			((SpStringTableColumn title: 'Due Date' evaluated: [ :anIssue |
+					  anIssue dueDate
+						  ifNil: [ '' ]
+						  ifNotNil: [ :date | date asDate asString ] ])
+				 width: 120;
+				 yourself);
+		items: issues;
+		beResizable;
+		contextMenu: [ self buildContextMenu ].
+
+	issueList whenSelectionChangedDo: [ :selection |
+		selection selectedItem ifNotNil: [ :selectedIssue |
+			currentIssue := selectedIssue.
+			detailsForm loadIssue: selectedIssue.
+			self updateMoveButtonsState ] ].
+
+	self updateMoveButtonsState
 ]
 
 { #category : 'initialization' }
@@ -202,7 +208,7 @@ IssueTrackerPresenter >> initializeWindow: aWindowPresenter [
 
 	aWindowPresenter
 		title: 'Issue Tracker';
-		initialExtent: 1000 @ 600
+		initialExtent: 1200 @ 800
 ]
 
 { #category : 'initialization' }
