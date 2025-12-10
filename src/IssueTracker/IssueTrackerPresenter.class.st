@@ -8,6 +8,8 @@ When you use self instantiate: IssueToolbarPresenter (or any sub-presenter), Spe
 Class {
 	#name : 'IssueTrackerPresenter',
 	#superclass : 'SpPresenter',
+	#traits : 'TPersistenceMenuTrait',
+	#classTraits : 'TPersistenceMenuTrait classTrait',
 	#instVars : [
 		'toolbar',
 		'issueList',
@@ -30,28 +32,53 @@ IssueTrackerPresenter class >> open [
 ]
 
 { #category : 'initialization' }
+IssueTrackerPresenter >> addIssueFromDetails [
+	"Override to add auto-save after adding issue"
+	super addIssueFromDetails.
+	IssueRepository uniqueInstance autoSave
+]
+
+{ #category : 'initialization' }
 IssueTrackerPresenter >> buildContextMenu [
-    | menu selectedIssue |
-    
-    "Get the currently selected issue"
-    selectedIssue := issueList selection selectedItem.
-    selectedIssue ifNil: [ ^ nil ].  "No menu if nothing selected"
-    
-    menu := self newMenu.
-    
-    menu addItem: [ :item |
-        item
-            name: 'Manage Dependencies...';
-            icon: (self iconNamed: #link);
-            action: [ self openDependencyDialogFor: selectedIssue ] ].
-    
-    menu addItem: [ :item |
-        item
-            name: 'Delete Issue';
-            icon: (self iconNamed: #delete);
-            action: [ self deleteIssue: selectedIssue ] ].
-    
-    ^ menu
+
+	| menu selectedIssue |
+	"Get the currently selected issue"
+	selectedIssue := issueList selection selectedItem.
+	selectedIssue ifNil: [ ^ nil ]. "No menu if nothing selected"
+
+	menu := self newMenu.
+
+	menu addItem: [ :item |
+		item
+			name: 'Manage Dependencies...';
+			icon: (self iconNamed: #link);
+			action: [ self openDependencyDialogFor: selectedIssue ] ].
+
+	menu addItem: [ :item |
+		item
+			name: 'Delete Issue';
+			icon: (self iconNamed: #delete);
+			action: [ self deleteIssue: selectedIssue ] ].
+
+	^ menu
+]
+
+{ #category : 'menu' }
+IssueTrackerPresenter >> buildMenuBar [
+	"Add a menu bar with File operations"
+	^ self newMenuBar 
+		addGroup: [ :group |
+			group addItem: [ :item |
+				item 
+					name: 'File';
+					subMenu: self buildFileMenu ] ];
+		yourself
+]
+
+{ #category : 'initialization' }
+IssueTrackerPresenter >> clearCurrentIssue [
+	"Clear the current issue selection"
+	currentIssue := nil
 ]
 
 { #category : 'initialization' }
@@ -112,6 +139,13 @@ IssueTrackerPresenter >> deleteIssue: anIssue [
         currentIssue := nil.
         detailsForm loadIssue: nil.  "Use loadIssue: nil instead of clear"
         self issueListChanged ]
+]
+
+{ #category : 'initialization' }
+IssueTrackerPresenter >> deleteSelectedIssue [
+	"Override to add auto-save after deleting issue"
+	super deleteSelectedIssue.
+	IssueRepository uniqueInstance autoSave
 ]
 
 { #category : 'initialization' }

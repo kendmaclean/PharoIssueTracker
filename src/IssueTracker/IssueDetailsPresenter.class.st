@@ -24,43 +24,9 @@ Class {
 
 { #category : 'initialization' }
 IssueDetailsPresenter >> addDependency [
-
-	| validCandidates currentIssue selectedIssue |
-	currentIssue := self owner currentIssue.
-	currentIssue ifNil: [ ^ self inform: 'Please select an issue first' ].
-
-	"Use the Handler to find valid candidates from the repository"
-	validCandidates := currentIssue dependencyHandler
-		                   availableDependenciesIn:
-		                   IssueRepository uniqueInstance allIssues.
-
-	validCandidates ifEmpty: [
-		^ self inform: 'No available issues to add as dependencies' ].
-
-	selectedIssue := UIManager default
-		                 chooseFrom: (validCandidates collect: #title)
-		                 values: validCandidates
-		                 title: 'Select issue this depends on:'.
-
-	selectedIssue ifNotNil: [
-		[
-		currentIssue addDependency: selectedIssue.
-		dependenciesList items: currentIssue dependencies.
-		self updateDependenciesVisibility.
-		self owner issueListChanged ]
-			on: Error
-			do: [ :ex | self inform: ex messageText ] ].
-		
-	selectedIssue ifNotNil: [
-			[ 
-			  currentIssue addDependency: selectedIssue.
-			  dependenciesList items: currentIssue dependencies.
-			  self updateDependenciesVisibility.
-			  self owner dependenciesChanged  "Changed from issueListChanged"
-			] on: Error do: [ :ex | self inform: ex messageText ] 
-	]		
-	
-
+	"Override to add auto-save after adding dependency"
+	super addDependency.
+	IssueRepository uniqueInstance autoSave
 ]
 
 { #category : 'initialization' }
@@ -448,15 +414,9 @@ IssueDetailsPresenter >> removeDependency [
 
 { #category : 'initialization' }
 IssueDetailsPresenter >> removeDependencyDirect: aDependency [
-	"Remove a dependency directly"
-	| currentIssue |
-	currentIssue := self owner currentIssue.
-	currentIssue ifNil: [ ^ self ].
-	
-	currentIssue removeDependency: aDependency.
-	dependenciesList items: currentIssue dependencies.
-	self updateDependenciesVisibility.
-	self owner dependenciesChanged  "Changed from issueListChanged"
+	"Override to add auto-save after removing dependency"
+	super removeDependencyDirect: aDependency.
+	IssueRepository uniqueInstance autoSave
 ]
 
 { #category : 'initialization' }
@@ -517,4 +477,13 @@ IssueDetailsPresenter >> updateButtonStates [
 IssueDetailsPresenter >> updateDependenciesVisibility [
     "Dependencies are now managed via dialog only, not shown in form"
     self layout: (self buildLayoutWithDependencies: false)
+]
+
+{ #category : 'initialization' }
+IssueDetailsPresenter >> updateIssue [
+	"Override to add auto-save after updating"
+	| result |
+	result := super updateIssue.
+	IssueRepository uniqueInstance autoSave.
+	^ result
 ]

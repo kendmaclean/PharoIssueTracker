@@ -1,6 +1,8 @@
 Class {
 	#name : 'IssueTrackerGanttPresenter',
 	#superclass : 'SpPresenter',
+	#traits : 'TPersistenceMenuTrait',
+	#classTraits : 'TPersistenceMenuTrait classTrait',
 	#instVars : [
 		'toolbar',
 		'ganttCanvas',
