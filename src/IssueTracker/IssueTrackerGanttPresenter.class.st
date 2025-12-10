@@ -597,7 +597,7 @@ IssueTrackerGanttPresenter >> switchToTableView [
     "Close current window and open table view at same position"
     | tablePresenter currentPosition |
     currentPosition := self window adapter widget position.
-    tablePresenter := IssueTrackerPresenter new.
+    tablePresenter := IssueTrackerTablePresenter new.
     tablePresenter open.
     tablePresenter window adapter widget position: currentPosition.
     self window close
