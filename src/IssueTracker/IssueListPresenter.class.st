@@ -25,14 +25,19 @@ IssueListPresenter >> initializePresenters [
 		evaluated: [ :issue |
 			issue priority asString first asUppercase asString ])
 		width: 30;
-		compareFunction: [ :a :b | a priority < b priority ];
+		beSortable;
+		compareFunction: [ :a :b | 
+			| priorities |
+			priorities := #(low medium high critical).
+			(priorities indexOf: a priority) < (priorities indexOf: b priority) ];
 		yourself).
 	
 	"Title column - main content"
 	issueTable addColumn: ((SpStringTableColumn
 		title: 'Title'
-		evaluated: [ :issue | issue title ]) 
-		compareFunction: [ :a :b | a title < b title ];
+		evaluated: [ :issue | issue title ])
+		beSortable;
+		compareFunction: [ :a :b | a title asLowercase < b title asLowercase ];
 		yourself).
 	
 	"Dependencies indicator column - clickable"
@@ -43,6 +48,7 @@ IssueListPresenter >> initializePresenters [
 				ifTrue: [ '🔗 ', issue dependencies size asString ]
 				ifFalse: [ '-' ] ])
 		width: 60;
+		beSortable;
 		compareFunction: [ :a :b | a dependencies size < b dependencies size ];
 		yourself).
 	
@@ -51,7 +57,11 @@ IssueListPresenter >> initializePresenters [
 		title: 'Status'
 		evaluated: [ :issue | issue status asString ])
 		width: 100;
-		compareFunction: [ :a :b | a status < b status ];
+		beSortable;
+		compareFunction: [ :a :b | 
+			| statuses |
+			statuses := #(open inProgress resolved closed milestone).
+			(statuses indexOf: a status) < (statuses indexOf: b status) ];
 		yourself).
 	
 	"Due date column"
@@ -61,12 +71,18 @@ IssueListPresenter >> initializePresenters [
 				ifNil: [ '-' ]
 				ifNotNil: [ :d | d asDate asString ] ])
 		width: 110;
-		compareFunction: [ :a :b | a dueDate < b dueDate ];
+		beSortable;
+		compareFunction: [ :a :b | 
+			| aDate bDate |
+			aDate := a dueDate ifNil: [ Date new year: 9999 ].
+			bDate := b dueDate ifNil: [ Date new year: 9999 ].
+			aDate < bDate ];
 		yourself).
 	
 	"Select issue on single click"
-	issueTable whenSelectedDo: [ :issue | 
-		self owner onIssueSelected: issue ].
+	issueTable whenSelectionChangedDo: [ :selection |
+		selection selectedItem ifNotNil: [ :issue | 
+			self owner onIssueSelected: issue ] ].
 	
 	"Add context menu for dependencies"
 	issueTable contextMenu: [ 

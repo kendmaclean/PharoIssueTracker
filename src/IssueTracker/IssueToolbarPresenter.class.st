@@ -44,49 +44,51 @@ IssueToolbarPresenter >> hideClosedIssues [
 { #category : 'initialization' }
 IssueToolbarPresenter >> initializePresenters [
 	"Add persistence buttons to toolbar"
-	
+
 	dueDateFilter := #all.
 	hideClosedIssues := false.
 
 	"Filtering buttons"
 	showAllButton := self newButton
-		label: '• All';
-		help: 'Show all issues';
-		action: [ self onShowAll ];
-		yourself.
+		                 label: '• All';
+		                 help: 'Show all issues';
+		                 action: [ self onShowAll ];
+		                 yourself.
 
 	showTodayButton := self newButton
-		label: 'Today';
-		help: 'Show issues due today';
-		action: [ self onShowToday ];
-		yourself.
+		                   label: 'Today';
+		                   help: 'Show issues due today';
+		                   action: [ self onShowToday ];
+		                   yourself.
 
 	showWeekButton := self newButton
-		label: 'This Week';
-		help: 'Show issues due this week';
-		action: [ self onShowWeek ];
-		yourself.
+		                  label: 'This Week';
+		                  help: 'Show issues due this week';
+		                  action: [ self onShowWeek ];
+		                  yourself.
 
 	hideClosedButton := self newButton
-		label: 'Hide Closed';
-		help: 'Toggle closed issues visibility';
-		action: [ self onToggleHideClosed ];
-		yourself.
+		                    label: 'Hide Closed';
+		                    help: 'Toggle closed issues visibility';
+		                    action: [ self onToggleHideClosed ];
+		                    yourself.
 
 	"Action buttons"
 	chartButton := self newButton
-		label: 'Chart';
-		icon: (self iconNamed: #chart);
-		action: [ self onShowChart ];
-		yourself.
-	
+		               label: 'Chart';
+		               icon: (self iconNamed: #chart);
+		               action: [ self onShowChart ];
+		               yourself.
+
 	"Persistence: More options menu (backup, import, export)"
 	ganttButton := self newButton
-		label: 'More...';
-		icon: (self iconNamed: #smallDoIt);
-		help: 'Backup, Import, Export (auto-save enabled)';
-		action: [ self owner buildPersistenceMenu openWithSpecAtPointer ];
-		yourself
+		               label: 'More...';
+		               icon: (self iconNamed: #smallDoIt);
+		               help: 'Backup, Import, Export (auto-save enabled)';
+		               action: [
+			               self owner buildPersistenceMenu
+				               openWithSpecAtPointer ];
+		               yourself
 ]
 
 { #category : 'initialization' }

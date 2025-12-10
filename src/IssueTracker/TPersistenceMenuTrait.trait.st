@@ -8,28 +8,29 @@ Trait {
 TPersistenceMenuTrait >> buildPersistenceMenu [
 	"Build a menu with persistence options (backup, import, export)
 	Note: Auto-save handles regular saves automatically"
+
 	^ self newMenu
-		addItem: [ :item |
-			item 
-				name: 'Change Storage Location...';
-				icon: (self iconNamed: #home);
-				action: [ self changeStorageLocation ] ];
-		addItem: [ :item |
-			item 
-				name: 'Create Backup';
-				icon: (self iconNamed: #glamorousSaveAs);
-				action: [ self createBackup ] ];
-		addItem: [ :item |
-			item 
-				name: 'Export to...';
-				icon: (self iconNamed: #glamorousExport);
-				action: [ self exportIssues ] ];
-		addItem: [ :item |
-			item 
-				name: 'Import from...';
-				icon: (self iconNamed: #glamorousImport);
-				action: [ self importIssues ] ];
-		yourself
+		  addItem: [ :item |
+			  item
+				  name: 'Change Storage Location...';
+				  icon: (self iconNamed: #home);
+				  action: [ self changeStorageLocation ] ];
+		  addItem: [ :item |
+			  item
+				  name: 'Create Backup';
+				  icon: (self iconNamed: #smallSave);
+				  action: [ self createBackup ] ];
+		  addItem: [ :item |
+			  item
+				  name: 'Export to...';
+				  icon: (self iconNamed: #smallSaveAs);
+				  action: [ self exportIssues ] ];
+		  addItem: [ :item |
+			  item
+				  name: 'Import from...';
+				  icon: (self iconNamed: #smallExport);
+				  action: [ self importIssues ] ];
+		  yourself
 ]
 
 { #category : 'persistence' }

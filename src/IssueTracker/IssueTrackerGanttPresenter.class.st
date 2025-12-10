@@ -436,46 +436,47 @@ IssueTrackerGanttPresenter >> hasCurrentIssue [
 
 { #category : 'initialization' }
 IssueTrackerGanttPresenter >> initializePresenters [
-    issues := IssueRepository uniqueInstance allIssues.
-    currentIssue := nil.
-    
-    toolbar := self instantiate: IssueToolbarPresenter.
-    detailsForm := self instantiate: IssueDetailsPresenter.
-    ganttCanvas := self instantiate: SpRoassalPresenter.
-    
-    "Add view switch button"
-    viewSwitchButton := self newButton
-        label: 'Table View';
-        icon: (self iconNamed: #smallConfiguration);
-        help: 'Switch to table view';
-        action: [ self switchToTableView ];
-        yourself.
-    
-    "Add reordering buttons"
-    moveUpButton := self newButton
-        label: '↑ Move Up';
-        icon: (self iconNamed: #up);
-        help: 'Move selected issue up in order';
-        action: [ self moveIssueUp ];
-        enabled: false;
-        yourself.
-    
-    moveDownButton := self newButton
-        label: '↓ Move Down';
-        icon: (self iconNamed: #down);
-        help: 'Move selected issue down in order';
-        action: [ self moveIssueDown ];
-        enabled: false;
-        yourself.
-    
-    self buildGanttChart
+
+	issues := IssueRepository uniqueInstance allIssues.
+	currentIssue := nil.
+
+	toolbar := self instantiate: IssueToolbarPresenter.
+	detailsForm := self instantiate: IssueDetailsPresenter.
+	ganttCanvas := self instantiate: SpRoassalPresenter.
+
+	"Add view switch button"
+	viewSwitchButton := self newButton
+		                    label: 'Table View';
+		                    icon: (self iconNamed: #smallConfiguration);
+		                    help: 'Switch to table view';
+		                    action: [ self switchToTableView ];
+		                    yourself.
+
+	"Add reordering buttons"
+	moveUpButton := self newButton
+		                icon: (self iconNamed: #up);
+		                help: 'Move selected issue up in order';
+		                action: [ self moveIssueUp ];
+		                enabled: false;
+		                yourself.
+
+	moveDownButton := self newButton
+		                  icon: (self iconNamed: #down);
+		                  help: 'Move selected issue down in order';
+		                  action: [ self moveIssueDown ];
+		                  enabled: false;
+		                  yourself.
+
+	self buildGanttChart
 ]
 
 { #category : 'initialization' }
 IssueTrackerGanttPresenter >> initializeWindow: aWindowPresenter [
+
 	aWindowPresenter
 		title: 'Issue Tracker - Gantt View';
-		initialExtent: 1200 @ 800
+		initialExtent: 1200 @ 800.
+
 ]
 
 { #category : 'initialization' }
@@ -593,10 +594,12 @@ IssueTrackerGanttPresenter >> showEmptyMessageOn: rsCanvas [
 
 { #category : 'initialization' }
 IssueTrackerGanttPresenter >> switchToTableView [
-    "Close current window and open table view"
-    | tablePresenter |
+    "Close current window and open table view at same position"
+    | tablePresenter currentPosition |
+    currentPosition := self window adapter widget position.
     tablePresenter := IssueTrackerPresenter new.
     tablePresenter open.
+    tablePresenter window adapter widget position: currentPosition.
     self window close
 ]
 

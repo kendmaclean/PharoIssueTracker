@@ -88,30 +88,31 @@ IssueTrackerPresenter >> currentIssue [
 
 { #category : 'initialization' }
 IssueTrackerPresenter >> defaultLayout [
-    ^ SpBoxLayout newTopToBottom
-        spacing: 5;
-        add: (SpBoxLayout newLeftToRight
-            spacing: 5;
-            add: toolbar;
-            add: viewSwitchButton width: 100;
-            yourself)
-        expand: false;
-        add: (SpBoxLayout newLeftToRight
-            spacing: 5;
-            add: (SpPanedLayout newTopToBottom
-                positionOfSlider: 0.6;  "Same as Gantt view"
-                add: issueList;
-                add: detailsForm;
-                yourself);
-            add: (SpBoxLayout newTopToBottom
-                spacing: 5;
-                add: moveUpButton expand: false;
-                add: moveDownButton expand: false;
-                addLast: '';  "spacer"
-                yourself)
-            width: 50;
-            yourself);
-        yourself
+
+	^ SpBoxLayout newTopToBottom
+		  spacing: 5;
+		  add: (SpBoxLayout newLeftToRight
+				   spacing: 5;
+				   add: toolbar;
+				   add: viewSwitchButton width: 100;
+				   yourself)
+		  expand: false;
+		  add: (SpBoxLayout newLeftToRight
+				   spacing: 5;
+				   add: (SpPanedLayout newTopToBottom
+						    positionOfSlider: 0.6;
+						    add: issueList;
+						    add: detailsForm;
+						    yourself);
+				   add: (SpBoxLayout newTopToBottom
+						    spacing: 5;
+						    add: moveUpButton expand: false;
+						    add: moveDownButton expand: false;
+						    addLast: '';
+						    yourself)
+				   width: 50;
+				   yourself);
+		  yourself
 ]
 
 { #category : 'initialization' }
@@ -188,7 +189,7 @@ IssueTrackerPresenter >> initializePresenters [
 	currentIssue := nil.
 
 	toolbar := self instantiate: IssueToolbarPresenter.
-	issueList := self newTable.
+	issueList := self instantiate: IssueListPresenter.
 	detailsForm := self instantiate: IssueDetailsPresenter.
 
 	"Add view switch button"
@@ -201,49 +202,19 @@ IssueTrackerPresenter >> initializePresenters [
 
 	"Add reordering buttons"
 	moveUpButton := self newButton
-		                label: '↑';
+		                label: '↑ Move Up';
 		                icon: (self iconNamed: #up);
-		                help: 'Move issue up';
+		                help: 'Move selected issue up in order';
 		                action: [ self moveIssueUp ];
 		                yourself.
 
 	moveDownButton := self newButton
-		                  label: '↓';
+		                  label: '↓ Move Down';
 		                  icon: (self iconNamed: #down);
-		                  help: 'Move issue down';
+		                  help: 'Move selected issue down in order';
 		                  action: [ self moveIssueDown ].
 
-	issueList
-		addColumn: (SpStringTableColumn
-				 title: 'Title'
-				 evaluated: [ :anIssue | anIssue title ]) yourself;
-		addColumn: ((SpStringTableColumn
-				  title: 'Priority'
-				  evaluated: [ :anIssue | anIssue priority asString ])
-				 width: 100;
-				 yourself);
-		addColumn: ((SpStringTableColumn
-				  title: 'Status'
-				  evaluated: [ :anIssue | anIssue status asString ])
-				 width: 100;
-				 yourself);
-		addColumn:
-			((SpStringTableColumn title: 'Due Date' evaluated: [ :anIssue |
-					  anIssue dueDate
-						  ifNil: [ '' ]
-						  ifNotNil: [ :date | date asDate asString ] ])
-				 width: 120;
-				 yourself);
-		items: issues;
-		beResizable;
-		contextMenu: [ self buildContextMenu ].
-
-	issueList whenSelectionChangedDo: [ :selection |
-		selection selectedItem ifNotNil: [ :selectedIssue |
-			currentIssue := selectedIssue.
-			detailsForm loadIssue: selectedIssue.
-			self updateMoveButtonsState ] ].
-
+	issueList items: issues.
 	self updateMoveButtonsState
 ]
 
@@ -252,7 +223,8 @@ IssueTrackerPresenter >> initializeWindow: aWindowPresenter [
 
 	aWindowPresenter
 		title: 'Issue Tracker';
-		initialExtent: 1200 @ 800
+		initialExtent: 1200 @ 800.
+
 ]
 
 { #category : 'initialization' }
@@ -285,25 +257,22 @@ IssueTrackerPresenter >> moveIssueDown [
 
 { #category : 'initialization' }
 IssueTrackerPresenter >> moveIssueUp [
-    | repository currentIndex itemToMove |
-    currentIssue ifNil: [ ^ self ].
-    
-    itemToMove := currentIssue.
-    repository := IssueRepository uniqueInstance.
-    currentIndex := repository allIssues indexOf: itemToMove.
-    
-    Transcript show: 'Before move: currentIssue = ', itemToMove title; cr.
-    Transcript show: 'Current index: ', currentIndex asString; cr.
-    
-    currentIndex > 1 ifTrue: [
-        "Swap directly in the repository's internal collection"
-        repository swapIssueAt: currentIndex with: currentIndex - 1.
-        
-        "Refresh the display"
-        issueList items: repository allIssues.
-        currentIssue := itemToMove.
-        issueList selectIndex: currentIndex - 1.
-        self updateMoveButtonsState ]
+
+	| repository currentIndex itemToMove |
+	currentIssue ifNil: [ ^ self ].
+
+	itemToMove := currentIssue.
+	repository := IssueRepository uniqueInstance.
+	currentIndex := repository allIssues indexOf: itemToMove.
+
+	currentIndex > 1 ifTrue: [ "Swap directly in the repository's internal collection"
+		repository swapIssueAt: currentIndex with: currentIndex - 1.
+
+		"Refresh the display"
+		issueList items: repository allIssues.
+		currentIssue := itemToMove.
+		issueList selectIndex: currentIndex - 1.
+		self updateMoveButtonsState ]
 ]
 
 { #category : 'initialization' }
@@ -342,10 +311,12 @@ IssueTrackerPresenter >> reorderIssue: draggedIssue dropItem: targetIssue [
 
 { #category : 'initialization' }
 IssueTrackerPresenter >> switchToGanttView [
-    "Close current window and open Gantt view"
-    | ganttPresenter |
+    "Close current window and open Gantt view at same position"
+    | ganttPresenter currentPosition |
+    currentPosition := self window adapter widget position.
     ganttPresenter := IssueTrackerGanttPresenter new.
     ganttPresenter open.
+    ganttPresenter window adapter widget position: currentPosition.
     self window close
 ]
 
