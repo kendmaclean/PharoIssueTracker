@@ -24,32 +24,34 @@ IssueDependencyDialog class >> openFor: anIssue [
 { #category : 'initialization' }
 IssueDependencyDialog >> addDependency [
 	"Add dependency and trigger callback"
+
 	| validCandidates selectedIssue |
 	issue ifNil: [ ^ self ].
-	
+
 	"Use the Handler to find valid candidates from the repository"
-	validCandidates := issue dependencyHandler  
-		availableDependenciesIn: IssueRepository uniqueInstance allIssues.
-	
-	validCandidates ifEmpty: [  
+	validCandidates := issue dependencyHandler availableDependenciesIn:
+		                   IssueRepository uniqueInstance allIssues.
+
+	validCandidates ifEmpty: [
 		^ self inform: 'No available issues to add as dependencies' ].
-	
-	selectedIssue := UIManager default  
-		chooseFrom: (validCandidates collect: #title)
-		values: validCandidates
-		title: 'Select issue this depends on:'.
-	
-	selectedIssue ifNotNil: [ 
-		[  
-			issue addDependency: selectedIssue.
-			self refreshDependencies.
-			
-			"NEW: Auto-save changes"
-			IssueRepository uniqueInstance autoSave.
-			
-			"Execute callback if provided"
-			onDependencyChangedBlock ifNotNil: [ onDependencyChangedBlock value ]
-		] on: Error do: [ :ex | self inform: ex messageText ] ]
+
+	selectedIssue := UIManager default
+		                 chooseFrom: (validCandidates collect: #title)
+		                 values: validCandidates
+		                 title: 'Select issue this depends on:'.
+
+	selectedIssue ifNotNil: [
+		[
+		issue addDependency: selectedIssue.
+		self refreshDependencies.
+
+		"Auto-save changes"
+		IssueRepository uniqueInstance autoSave.
+
+		"Execute callback if provided"
+		onDependencyChangedBlock ifNotNil: [ onDependencyChangedBlock value ] ]
+			on: Error
+			do: [ :ex | self inform: ex messageText ] ]
 ]
 
 { #category : 'initialization' }

@@ -105,24 +105,36 @@ IssueTrackerGanttPresenter >> addDependencyArrows: rsCanvas issues: issues shape
 
 { #category : 'initialization' }
 IssueTrackerGanttPresenter >> addDependencyTo: anIssue [
+	"Add a single dependency with immediate chart update"
 	| validCandidates selectedIssue |
 	
 	"Use the Handler to find valid candidates from the repository"
-	validCandidates := anIssue dependencyHandler 
+	validCandidates := anIssue dependencyHandler   
 		availableDependenciesIn: IssueRepository uniqueInstance allIssues.
 	
-	validCandidates ifEmpty: [ 
+	validCandidates ifEmpty: [   
 		^ self inform: 'No available issues to add as dependencies' ].
 	
-	selectedIssue := UIManager default 
+	selectedIssue := UIManager default   
 		chooseFrom: (validCandidates collect: #title)
 		values: validCandidates
 		title: 'Select issue that "', anIssue title, '" depends on:'.
 	
 	selectedIssue ifNotNil: [
-		[ 
+		[   
 			anIssue addDependency: selectedIssue.
+			
+			"NEW: Auto-save the changes"
+			IssueRepository uniqueInstance autoSave.
+			
+			"Update the Gantt chart to show the new dependency arrow"
 			self updateGanttChart.
+			
+			"Update details form if this is the current issue"
+			currentIssue = anIssue ifTrue: [
+				detailsForm ensureDependenciesInitialized.
+				detailsForm loadDependencies: anIssue ].
+			
 			self inform: 'Dependency added successfully'
 		] on: Error do: [ :ex | self inform: ex messageText ] ]
 ]
@@ -348,15 +360,6 @@ IssueTrackerGanttPresenter >> deleteCurrentIssue [
 			detailsForm clearForm.
 			currentIssue := nil.
 			self updateGanttChart ] ]
-]
-
-{ #category : 'initialization' }
-IssueTrackerGanttPresenter >> dependenciesChanged [
-	"Called when dependencies are modified"
-	self updateGanttChart.
-	currentIssue ifNotNil: [ :issue |
-		detailsForm ensureDependenciesInitialized.
-		detailsForm loadDependencies: issue ]
 ]
 
 { #category : 'initialization' }
