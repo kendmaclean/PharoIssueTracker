@@ -128,17 +128,6 @@ IssueTrackerGanttPresenter >> addDependencyTo: anIssue [
 ]
 
 { #category : 'initialization' }
-IssueTrackerGanttPresenter >> anageDependenciesFor: anIssue [
-	IssueDependencyDialog openFor: anIssue.
-	"Refresh after dialog closes"
-	self updateGanttChart.
-	"Update details form if this is the current issue"    "Added these 3 lines"
-	currentIssue = anIssue ifTrue: [
-		detailsForm ensureDependenciesInitialized.
-		detailsForm loadDependencies: anIssue ]
-]
-
-{ #category : 'initialization' }
 IssueTrackerGanttPresenter >> buildGanttChart [
 	ganttCanvas script: [ :rsCanvas | self buildGanttOn: rsCanvas ]
 ]
@@ -488,13 +477,20 @@ IssueTrackerGanttPresenter >> issueListChanged [
 
 { #category : 'initialization' }
 IssueTrackerGanttPresenter >> manageDependenciesFor: anIssue [
-	IssueDependencyDialog openFor: anIssue.
-	"Refresh after dialog closes"
-	self updateGanttChart.
-	"Update details form if this is the current issue"    "Added these 3 lines"
-	currentIssue = anIssue ifTrue: [
-		detailsForm ensureDependenciesInitialized.
-		detailsForm loadDependencies: anIssue ]
+	"Open dependency dialog with callback for real-time updates"
+	| dialog |
+	dialog := IssueDependencyDialog new.
+	dialog issue: anIssue.
+	
+	"Set callback to update chart immediately when dependencies change"
+	dialog onDependencyChanged: [ 
+		self updateGanttChart.
+		"Update details form if this is the current issue"
+		currentIssue = anIssue ifTrue: [
+			detailsForm ensureDependenciesInitialized.
+			detailsForm loadDependencies: anIssue ] ].
+	
+	dialog open
 ]
 
 { #category : 'initialization' }
