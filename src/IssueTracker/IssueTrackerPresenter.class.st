@@ -84,7 +84,7 @@ IssueTrackerPresenter >> filterChanged [
 
 { #category : 'initialization' }
 IssueTrackerPresenter >> hasCurrentIssue [
-	^ currentIssue notNil
+	^ currentIssue notNil "test"
 ]
 
 { #category : 'initialization' }
