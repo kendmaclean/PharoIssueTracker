@@ -235,48 +235,60 @@ IssueTrackerPresenter >> issueListChanged [
 
 { #category : 'initialization' }
 IssueTrackerPresenter >> moveIssueDown [
-    | repository currentIndex itemToMove |
-    currentIssue ifNil: [ ^ self ].
-    
-    itemToMove := currentIssue.
-    repository := IssueRepository uniqueInstance.
-    currentIndex := repository allIssues indexOf: itemToMove.
-    
-    currentIndex < repository allIssues size ifTrue: [
-        "Swap directly in the repository's internal collection"
-        repository swapIssueAt: currentIndex with: currentIndex + 1.
-        
-        "Refresh the display"
-        issueList items: repository allIssues.
-        currentIssue := itemToMove.
-        issueList selectIndex: currentIndex + 1.
-        self updateMoveButtonsState ]
+
+	| repository currentIndex itemToMove allIssues |
+	currentIssue ifNil: [ ^ self ].
+
+	itemToMove := currentIssue.
+	repository := IssueRepository uniqueInstance.
+	allIssues := repository allIssues.
+	currentIndex := allIssues indexOf: itemToMove.
+
+	currentIndex < allIssues size ifTrue: [ 
+		"Swap directly in the repository's internal collection"
+		repository swapIssueAt: currentIndex with: currentIndex + 1.
+		
+		"Auto-save the change"
+		repository autoSave.
+
+		"Refresh the display"
+		issueList items: repository allIssues.
+		currentIssue := itemToMove.
+		issueList selectItem: itemToMove.
+		self updateMoveButtonsState ]
 ]
 
 { #category : 'initialization' }
 IssueTrackerPresenter >> moveIssueUp [
 
-	| repository currentIndex itemToMove |
+	| repository currentIndex itemToMove allIssues |
 	currentIssue ifNil: [ ^ self ].
 
 	itemToMove := currentIssue.
 	repository := IssueRepository uniqueInstance.
-	currentIndex := repository allIssues indexOf: itemToMove.
+	allIssues := repository allIssues.
+	currentIndex := allIssues indexOf: itemToMove.
 
-	currentIndex > 1 ifTrue: [ "Swap directly in the repository's internal collection"
+	currentIndex > 1 ifTrue: [ 
+		"Swap directly in the repository's internal collection"
 		repository swapIssueAt: currentIndex with: currentIndex - 1.
+		
+		"Auto-save the change"
+		repository autoSave.
 
 		"Refresh the display"
 		issueList items: repository allIssues.
 		currentIssue := itemToMove.
-		issueList selectIndex: currentIndex - 1.
+		issueList selectItem: itemToMove.
 		self updateMoveButtonsState ]
 ]
 
 { #category : 'initialization' }
 IssueTrackerPresenter >> onIssueSelected: anIssue [
+
 	currentIssue := anIssue.
-	detailsForm loadIssue: anIssue
+	detailsForm loadIssue: anIssue.
+	self updateMoveButtonsState
 ]
 
 { #category : 'initialization' }

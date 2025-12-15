@@ -67,12 +67,42 @@ IssueListPresenter >> initializePresenters [
 				 (statuses indexOf: a status) < (statuses indexOf: b status) ];
 			 yourself).
 
+	"Start date column"
+	issueTable addColumn:
+		((SpStringTableColumn title: 'Start' evaluated: [ :issue |
+				  issue startDate
+					  ifNil: [ '-' ]
+					  ifNotNil: [ :d | d asDate yyyymmdd asString ] ])
+			 width: 110;
+			 beSortable;
+			 compareFunction: [ :a :b |
+				 | aDate bDate |
+				 aDate := a startDate ifNil: [ Date new year: 9999 ].
+				 bDate := b startDate ifNil: [ Date new year: 9999 ].
+				 aDate < bDate ];
+			 yourself).
+
+	"Duration column"
+	issueTable addColumn:
+		((SpStringTableColumn title: 'Duration' evaluated: [ :issue |
+			  issue duration
+				  ifNil: [ '-' ]
+				  ifNotNil: [ :d | d asString ] ])
+			 width: 60;
+			 beSortable;
+			 compareFunction: [ :a :b |
+			 | aDur bDur |
+			 aDur := a duration ifNil: [ 0 ].
+			 bDur := b duration ifNil: [ 0 ].
+			 aDur < bDur ];
+			 yourself).
+
 	"Due date column"
 	issueTable addColumn:
 		((SpStringTableColumn title: 'Due' evaluated: [ :issue |
 				  issue dueDate
 					  ifNil: [ '-' ]
-					  ifNotNil: [ :d | d asDate asString ] ])
+					  ifNotNil: [ :d | d asDate yyyymmdd asString ] ])
 			 width: 110;
 			 beSortable;
 			 compareFunction: [ :a :b |
@@ -122,6 +152,12 @@ IssueListPresenter >> initializePresenters [
 { #category : 'initialization' }
 IssueListPresenter >> items: aCollection [
 	issueTable items: aCollection
+]
+
+{ #category : 'initialization' }
+IssueListPresenter >> selectItem: anIssue [
+	"Select a specific item in the table"
+	issueTable selectItem: anIssue
 ]
 
 { #category : 'initialization' }
