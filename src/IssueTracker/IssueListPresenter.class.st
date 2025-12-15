@@ -9,10 +9,94 @@ Class {
 }
 
 { #category : 'initialization' }
+IssueListPresenter >> computeDelay: anIssue [
+	"Compute delay in days for an issue"
+	| originalStart actualStart |
+	originalStart := anIssue computedStartDate.
+	actualStart := anIssue dependencyAwareStartDate.
+	
+	(originalStart isNil or: [ actualStart isNil ]) 
+		ifTrue: [ ^ 0 ].
+	
+	^ actualStart asDate julianDayNumber 
+		- originalStart asDate julianDayNumber max: 0
+]
+
+{ #category : 'initialization' }
 IssueListPresenter >> defaultLayout [
 	^ SpBoxLayout newTopToBottom
 		add: issueTable;
 		yourself
+]
+
+{ #category : 'initialization' }
+IssueListPresenter >> formatDelay: anIssue [
+	"Format delay column - shows days delayed in red"
+	| delay delayText |
+	
+	delay := self computeDelay: anIssue.
+	
+	delay = 0 ifTrue: [ ^ '-' ].
+	
+	delayText := '+' , delay asString.
+	
+	^ (delayText asText)
+		addAttribute: (TextColor color: Color red);
+		yourself
+]
+
+{ #category : 'initialization' }
+IssueListPresenter >> formatDueDate: anIssue [
+	"Format due date - returns colored text if delayed"
+	| originalDue actualDue delay dateText |
+	
+	originalDue := anIssue computedDueDate.
+	actualDue := anIssue dependencyAwareEndDate.
+	
+	actualDue ifNil: [ 
+		^ anIssue dueDate
+			ifNil: [ '-' ]
+			ifNotNil: [ :d | d asDate yyyymmdd asString ] ].
+	
+	dateText := actualDue asDate yyyymmdd asString.
+	
+	"Check if delayed"
+	originalDue ifNotNil: [
+		delay := actualDue asDate julianDayNumber 
+			- originalDue asDate julianDayNumber.
+		delay > 0 ifTrue: [ 
+			^ (dateText asText)
+				addAttribute: (TextColor color: Color red);
+				yourself ] ].
+	
+	^ dateText
+]
+
+{ #category : 'initialization' }
+IssueListPresenter >> formatStartDate: anIssue [
+	"Format start date - returns colored text if delayed"
+	| originalStart actualStart delay dateText |
+	
+	originalStart := anIssue computedStartDate.
+	actualStart := anIssue dependencyAwareStartDate.
+	
+	actualStart ifNil: [ 
+		^ anIssue startDate
+			ifNil: [ '-' ]
+			ifNotNil: [ :d | d asDate yyyymmdd asString ] ].
+	
+	dateText := actualStart asDate yyyymmdd asString.
+	
+	"Check if delayed"
+	originalStart ifNotNil: [
+		delay := actualStart asDate julianDayNumber 
+			- originalStart asDate julianDayNumber.
+		delay > 0 ifTrue: [ 
+			^ (dateText asText)
+				addAttribute: (TextColor color: Color red);
+				yourself ] ].
+	
+	^ dateText
 ]
 
 { #category : 'initialization' }
@@ -67,28 +151,41 @@ IssueListPresenter >> initializePresenters [
 				 (statuses indexOf: a status) < (statuses indexOf: b status) ];
 			 yourself).
 
-	"Start date column"
+	"Start date column - shows dependency-aware date in red if delayed"
 	issueTable addColumn:
 		((SpStringTableColumn title: 'Start' evaluated: [ :issue |
-				  issue startDate
-					  ifNil: [ '-' ]
-					  ifNotNil: [ :d | d asDate yyyymmdd asString ] ])
+			  self formatStartDate: issue ])
 			 width: 110;
 			 beSortable;
 			 compareFunction: [ :a :b |
 				 | aDate bDate |
-				 aDate := a startDate ifNil: [ Date new year: 9999 ].
-				 bDate := b startDate ifNil: [ Date new year: 9999 ].
+				 aDate := a dependencyAwareStartDate ifNil: [ 
+					          a startDate ifNil: [ Date new year: 9999 ] ].
+				 bDate := b dependencyAwareStartDate ifNil: [ 
+					          b startDate ifNil: [ Date new year: 9999 ] ].
 				 aDate < bDate ];
+			 yourself).
+
+	"Delay column - shows how many days delayed due to dependencies"
+	issueTable addColumn:
+		((SpStringTableColumn title: '⚠' evaluated: [ :issue |
+			  self formatDelay: issue ])
+			 width: 45;
+			 beSortable;
+			 compareFunction: [ :a :b |
+				 | aDelay bDelay |
+				 aDelay := self computeDelay: a.
+				 bDelay := self computeDelay: b.
+				 aDelay < bDelay ];
 			 yourself).
 
 	"Duration column"
 	issueTable addColumn:
-		((SpStringTableColumn title: 'Duration' evaluated: [ :issue |
+		((SpStringTableColumn title: 'Dur' evaluated: [ :issue |
 			  issue duration
 				  ifNil: [ '-' ]
 				  ifNotNil: [ :d | d asString ] ])
-			 width: 60;
+			 width: 50;
 			 beSortable;
 			 compareFunction: [ :a :b |
 			 | aDur bDur |
@@ -97,18 +194,18 @@ IssueListPresenter >> initializePresenters [
 			 aDur < bDur ];
 			 yourself).
 
-	"Due date column"
+	"Due date column - shows dependency-aware date in red if delayed"
 	issueTable addColumn:
 		((SpStringTableColumn title: 'Due' evaluated: [ :issue |
-				  issue dueDate
-					  ifNil: [ '-' ]
-					  ifNotNil: [ :d | d asDate yyyymmdd asString ] ])
+			  self formatDueDate: issue ])
 			 width: 110;
 			 beSortable;
 			 compareFunction: [ :a :b |
 				 | aDate bDate |
-				 aDate := a dueDate ifNil: [ Date new year: 9999 ].
-				 bDate := b dueDate ifNil: [ Date new year: 9999 ].
+				 aDate := a dependencyAwareEndDate ifNil: [ 
+					          a dueDate ifNil: [ Date new year: 9999 ] ].
+				 bDate := b dependencyAwareEndDate ifNil: [ 
+					          b dueDate ifNil: [ Date new year: 9999 ] ].
 				 aDate < bDate ];
 			 yourself).
 
