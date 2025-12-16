@@ -12,11 +12,6 @@ TPersistenceMenuTrait >> buildPersistenceMenu [
 	^ self newMenu
 		  addItem: [ :item |
 			  item
-				  name: 'Change Storage Location...';
-				  icon: (self iconNamed: #home);
-				  action: [ self changeStorageLocation ] ];
-		  addItem: [ :item |
-			  item
 				  name: 'Create Backup';
 				  icon: (self iconNamed: #smallSave);
 				  action: [ self createBackup ] ];
@@ -30,6 +25,11 @@ TPersistenceMenuTrait >> buildPersistenceMenu [
 				  name: 'Import from...';
 				  icon: (self iconNamed: #smallExport);
 				  action: [ self importIssues ] ];
+		  addItem: [ :item |
+			  item
+				  name: 'Change Storage Location...';
+				  icon: (self iconNamed: #home);
+				  action: [ self changeStorageLocation ] ];
 		  yourself
 ]
 

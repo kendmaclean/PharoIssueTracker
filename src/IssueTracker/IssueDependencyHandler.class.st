@@ -74,10 +74,16 @@ IssueDependencyHandler >> removeDependency: aTargetIssue [
 
 { #category : 'accessing' }
 IssueDependencyHandler >> resolveEndDate [
-	| adjStart |
+	"Calculate end date by adding fractional days to start date"
+	| adjStart durationDays |
 	adjStart := self resolveStartDate.
 	adjStart ifNil: [ ^ nil ].
-	^ adjStart asDate addDays: issue computedDuration
+	
+	durationDays := issue computedDuration.
+	
+	"Handle fractional days by converting to seconds"
+	"1 day = 86400 seconds"
+	^ adjStart asDateAndTime + (Duration days: 0 hours: 0 minutes: 0 seconds: (durationDays * 86400) rounded)
 ]
 
 { #category : 'accessing' }
