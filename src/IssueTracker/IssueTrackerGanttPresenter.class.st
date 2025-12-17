@@ -163,39 +163,11 @@ IssueTrackerGanttPresenter >> filterChanged [
 
 { #category : 'initialization' }
 IssueTrackerGanttPresenter >> getFilteredIssues [
-	| filteredIssues |
-	filteredIssues := IssueRepository uniqueInstance allIssues.
+	"Get issues filtered by current toolbar settings"
+	| filter |
 	
-	"Apply closed filter"
-	toolbar hideClosedIssues ifTrue: [
-		filteredIssues := filteredIssues reject: [ :issue | 
-			issue status = #closed ] ].
-	
-	"Apply due date filter"
-	toolbar dueDateFilter = #today ifTrue: [
-		| today |
-		today := Date today.
-		filteredIssues := filteredIssues select: [ :issue |
-			| startDate endDate |
-			startDate := issue dependencyAwareStartDate.
-			endDate := issue dependencyAwareEndDate.
-			startDate notNil and: [ endDate notNil and: [
-				"Issue is active today if today falls between start and end dates"
-				today between: startDate asDate and: endDate asDate ] ] ] ].
-	
-	toolbar dueDateFilter = #week ifTrue: [
-		| today weekFromNow |
-		today := Date today.
-		weekFromNow := today addDays: 7.
-		filteredIssues := filteredIssues select: [ :issue |
-			| startDate endDate |
-			startDate := issue dependencyAwareStartDate.
-			endDate := issue dependencyAwareEndDate.
-			startDate notNil and: [ endDate notNil and: [
-				"Issue is active this week if it overlaps with the week period"
-				(startDate asDate <= weekFromNow) and: [ endDate asDate >= today ] ] ] ] ].
-	
-	^ filteredIssues
+	filter := IssueFilter fromToolbar: toolbar.
+	^ filter applyTo: IssueRepository uniqueInstance allIssues
 ]
 
 { #category : 'initialization' }
