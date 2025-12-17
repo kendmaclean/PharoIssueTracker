@@ -12,7 +12,8 @@ Class {
 		'moveUpButton',
 		'moveDownButton',
 		'viewSwitchButton',
-		'updateTask'
+		'updateTask',
+		'ganttBuilder'
 	],
 	#category : 'IssueTracker',
 	#package : 'IssueTracker'
@@ -22,85 +23,6 @@ Class {
 IssueTrackerGanttPresenter class >> open [
 	<script>
 	^ self new open
-]
-
-{ #category : 'initialization' }
-IssueTrackerGanttPresenter >> addDateAxis: rsCanvas from: startDate to: endDate count: issueCount leftMargin: leftMargin [
-	| currentDate xPos labels dateLabel gridLine |
-	
-	labels := OrderedCollection new.
-	currentDate := startDate.
-	
-	"Add labels every week"
-	[ currentDate <= endDate ] whileTrue: [
-		xPos := (currentDate julianDayNumber - startDate julianDayNumber) * 20 + leftMargin.
-		
-		"Date label"
-		dateLabel := RSLabel new
-			text: currentDate asString;
-			fontSize: 8;
-			color: Color gray;
-			yourself.
-		dateLabel translateBy: xPos @ -20.
-		labels add: dateLabel.
-		
-		"Vertical grid line"
-		gridLine := RSLine new
-			startPoint: xPos @ -10;
-			endPoint: xPos @ ((issueCount - 1) * 35 + 35);
-			color: (Color gray alpha: 0.2);
-			yourself.
-		labels add: gridLine.
-		
-		currentDate := currentDate addDays: 7 ].
-	
-	rsCanvas addAll: labels
-]
-
-{ #category : 'initialization' }
-IssueTrackerGanttPresenter >> addDependencyArrows: rsCanvas forIssues: issueList shapeMap: issueShapeMap [
-	"Draw arrows from dependencies to dependent issues"
-	| arrows |
-	arrows := OrderedCollection new.
-	issueList do: [ :issue |
-		| toShape |
-		toShape := issueShapeMap at: issue ifAbsent: [ nil ].
-		issue dependencies do: [ :dependency |
-			| fromShape line |
-			fromShape := issueShapeMap at: dependency ifAbsent: [ nil ].
-			(fromShape notNil and: [ toShape notNil ]) ifTrue: [ 
-				line := RSArrowedLine new
-					from: fromShape;
-					to: toShape;
-					color: (Color blue alpha: 0.5);
-					width: 2;
-					attachPoint: RSBorderAttachPoint new;
-					yourself.
-				arrows add: line ] ] ].
-	rsCanvas addAll: arrows
-]
-
-{ #category : 'initialization' }
-IssueTrackerGanttPresenter >> addDependencyArrows: rsCanvas issues: issues shapeMap: issueShapeMap [
-	"Draw arrows from dependencies to dependent issues"
-	| arrows |
-	arrows := OrderedCollection new.
-	issues do: [ :issue |
-		| toShape |
-		toShape := issueShapeMap at: issue ifAbsent: [ nil ].
-		issue dependencies do: [ :dependency |
-			| fromShape line |
-			fromShape := issueShapeMap at: dependency ifAbsent: [ nil ].
-			(fromShape notNil and: [ toShape notNil ]) ifTrue: [ 
-				line := RSArrowedLine new
-					from: fromShape;
-					to: toShape;
-					color: (Color blue alpha: 0.5);
-					width: 2;
-					attachPoint: RSBorderAttachPoint new;
-					yourself.
-				arrows add: line ] ] ].
-	rsCanvas addAll: arrows
 ]
 
 { #category : 'initialization' }
@@ -146,174 +68,29 @@ IssueTrackerGanttPresenter >> buildGanttChart [
 
 { #category : 'initialization' }
 IssueTrackerGanttPresenter >> buildGanttOn: rsCanvas [
-
-	| filteredIssues shapes baselineDate maxDate daySpan leftMargin issueShapeMap |
+	"Simplified method that delegates to GanttChartBuilder"
+	| filteredIssues |
+	
 	"Apply filters"
 	filteredIssues := self getFilteredIssues.
-
-	"Filter issues that have dates"
-	filteredIssues := filteredIssues select: [ :issue |
-		                  issue dependencyAwareEndDate notNil and: [
-			                  issue dependencyAwareStartDate notNil ] ].
-
-	filteredIssues ifEmpty: [ ^ self showEmptyMessageOn: rsCanvas ].
-
-	"Calculate date range"
-	baselineDate := (filteredIssues collect: #dependencyAwareStartDate)
-		                min.
-	maxDate := (filteredIssues collect: #dependencyAwareEndDate) max.
-	daySpan := maxDate julianDayNumber - baselineDate julianDayNumber
-		           max: 1.
-	leftMargin := 150.
-
-	shapes := OrderedCollection new.
-	issueShapeMap := Dictionary new.
-
-	"Create bars/diamonds for each issue"
-	filteredIssues withIndexDo: [ :issue :index |
-		| shape width label composite startDays endDays startX hasDelayDue originalStart isMilestone |
-		startDays := issue dependencyAwareStartDate julianDayNumber
-		             - baselineDate julianDayNumber.
-		endDays := issue dependencyAwareEndDate julianDayNumber
-		           - baselineDate julianDayNumber.
-
-		originalStart := issue computedStartDate.
-		hasDelayDue := originalStart notNil and: [
-			               issue dependencyAwareStartDate > originalStart ].
-
-		startX := leftMargin + (startDays * 20).
-		width := (endDays - startDays max: 1) * 20.
-		
-		"Check if this is a milestone (by status)"
-		isMilestone := issue status = #milestone.
-
-		"Create shape based on type"
-		isMilestone ifTrue: [
-			"Create diamond for milestone"
-			shape := RSPolygon new
-				points: { 0@(-15). 15@0. 0@15. -15@0 };  "Diamond points"
-				color: Color yellow;
-				border: (RSBorder new 
-					color: (hasDelayDue ifTrue: [ Color red ] ifFalse: [ Color black ]); 
-					width: 2);
-				model: issue;
-				yourself.
-		] ifFalse: [
-			"Create regular bar for normal issues"
-			shape := RSBox new
-				width: width;
-				height: 25;
-				color: (hasDelayDue
-					ifTrue: [ (self colorForStatus: issue status) darker ]
-					ifFalse: [ self colorForStatus: issue status ]);
-				model: issue;
-				yourself.
-
-			hasDelayDue ifTrue: [
-				shape border: (RSBorder new
-					color: Color red;
-					width: 2) ].
-
-			shape translateBy: width / 2 @ 0.
-		].
-
-		"Create label"
-		label := RSLabel new
-			text: (isMilestone
-				ifTrue: [ '◆ ' , issue title , 
-					(hasDelayDue ifTrue: [ ' (delayed)' ] ifFalse: [ '' ]) ]
-				ifFalse: [ 
-					hasDelayDue
-						ifTrue: [ issue title , ' (delayed)' ]
-						ifFalse: [ issue title ] ]);
-			fontSize: 10;
-			yourself.
-
-		label translateBy: (isMilestone 
-			ifTrue: [ 20 @ 0 ]  "Position label to right of diamond"
-			ifFalse: [ width + 10 @ 0 ]).  "Position label to right of bar"
-
-		"Create composite"
-		composite := RSComposite new
-			shapes: {
-				shape.
-				label };
-			model: issue;
-			yourself.
-
-		composite translateBy: startX @ ((index - 1) * 35).
-
-		shapes add: composite.
-		issueShapeMap at: issue put: shape.
-
-		"Add click handler to select issue"
-		shape
-			when: RSMouseClick
-			do: [ :evt | self onIssueSelected: issue ]
-			for: self.
-
-		"Add right-click context menu"
-		shape
-			when: RSMouseRightClick
-			do: [ :evt | self showContextMenuFor: issue at: evt ]
-			for: self.
-
-		"Add tooltip"
-		shape @ (RSPopup text: [ :i |
-			 | tooltip |
-			 tooltip := i title , String cr , 'Status: ' , i status asString
-			            , String cr , 'Priority: ' , i priority asString
-			            , String cr.
-			 isMilestone ifTrue: [
-				 tooltip := tooltip , 'Type: Milestone' , String cr ].
-			 originalStart ifNotNil: [
-				 tooltip := tooltip , 'Original Start: ' , originalStart asString
-				            , String cr ].
-			 tooltip := tooltip , 'Actual Start: '
-			            , i dependencyAwareStartDate asString , String cr
-			            , 'End: ' , i dependencyAwareEndDate asString
-			            , String cr , 'Duration: '
-			            , i computedDuration asString , ' days'.
-			 i hasDependencies ifTrue: [
-				 tooltip := tooltip , String cr , 'Dependencies: '
-				            , i dependencies size asString ].
-			 hasDelayDue ifTrue: [
-				 tooltip := tooltip , String cr , '⚠ Delayed by dependencies' ].
-			 tooltip ]) ].
-
-	rsCanvas addAll: shapes.
-
-	"Draw dependency arrows"
-	self
-		addDependencyArrows: rsCanvas
-		forIssues: filteredIssues
-		shapeMap: issueShapeMap.
-
-	"Add date axis"
-	self
-		addDateAxis: rsCanvas
-		from: baselineDate
-		to: maxDate
-		count: filteredIssues size
-		leftMargin: leftMargin.
-
-	rsCanvas @ RSCanvasController.
-	^ rsCanvas
+	
+	"Create and configure builder"
+	ganttBuilder := GanttChartBuilder new.
+	ganttBuilder canvas: rsCanvas.
+	ganttBuilder issues: filteredIssues.
+	
+	"Set up callbacks"
+	ganttBuilder onIssueClick: [ :issue | self onIssueSelected: issue ].
+	ganttBuilder onIssueRightClick: [ :issue :evt | self showContextMenuFor: issue at: evt ].
+	
+	"Build the chart"
+	^ ganttBuilder build
 ]
 
 { #category : 'initialization' }
 IssueTrackerGanttPresenter >> clearCurrentIssue [
 	"Clear the current issue selection"
 	currentIssue := nil
-]
-
-{ #category : 'initialization' }
-IssueTrackerGanttPresenter >> colorForStatus: aStatus [
-	aStatus = #open ifTrue: [ ^ Color cyan ].
-	aStatus = #inProgress ifTrue: [ ^ Color orange ].
-	aStatus = #resolved ifTrue: [ ^ Color green ].
-	aStatus = #closed ifTrue: [ ^ Color gray ].
-	^ Color black
 ]
 
 { #category : 'initialization' }
