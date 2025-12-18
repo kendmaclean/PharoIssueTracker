@@ -19,7 +19,8 @@ Class {
 		'moveUpButton',
 		'moveDownButton',
 		'viewSwitchButton',
-		'updateTask'
+		'updateTask',
+		'issueManager'
 	],
 	#category : 'IssueTracker',
 	#package : 'IssueTracker'
@@ -29,50 +30,6 @@ Class {
 IssueTrackerPresenter class >> open [
 	<script>
 	^ self new open
-]
-
-{ #category : 'initialization' }
-IssueTrackerPresenter >> addIssueFromDetails [
-	"Override to add auto-save after adding issue"
-	super addIssueFromDetails.
-	IssueRepository uniqueInstance autoSave
-]
-
-{ #category : 'initialization' }
-IssueTrackerPresenter >> buildContextMenu [
-
-	| menu selectedIssue |
-	"Get the currently selected issue"
-	selectedIssue := issueList selection selectedItem.
-	selectedIssue ifNil: [ ^ nil ]. "No menu if nothing selected"
-
-	menu := self newMenu.
-
-	menu addItem: [ :item |
-		item
-			name: 'Manage Dependencies...';
-			icon: (self iconNamed: #link);
-			action: [ self openDependencyDialogFor: selectedIssue ] ].
-
-	menu addItem: [ :item |
-		item
-			name: 'Delete Issue';
-			icon: (self iconNamed: #delete);
-			action: [ self deleteIssue: selectedIssue ] ].
-
-	^ menu
-]
-
-{ #category : 'menu' }
-IssueTrackerPresenter >> buildMenuBar [
-	"Add a menu bar with File operations"
-	^ self newMenuBar 
-		addGroup: [ :group |
-			group addItem: [ :item |
-				item 
-					name: 'File';
-					subMenu: self buildFileMenu ] ];
-		yourself
 ]
 
 { #category : 'initialization' }
@@ -117,14 +74,15 @@ IssueTrackerPresenter >> defaultLayout [
 
 { #category : 'initialization' }
 IssueTrackerPresenter >> deleteCurrentIssue [
-	currentIssue ifNotNil: [ :issue |
-		(self confirm: 'Delete issue: ', issue title, '?') ifTrue: [
-			IssueRepository uniqueInstance removeIssue: issue.
-			issues := IssueRepository uniqueInstance allIssues.
-			issueList unselectAll.
-			detailsForm clearForm.
-			currentIssue := nil.
-			self updateIssueList ] ]
+    "Delete the currently selected issue"
+    
+    currentIssue ifNil: [ ^ self ].
+    
+    (self confirm: 'Delete issue: "', currentIssue title, '"?') ifTrue: [
+        issueManager deleteIssue: currentIssue.
+        self clearCurrentIssue.
+        detailsForm clearForm.
+        self issueListChanged ]
 ]
 
 { #category : 'initialization' }
@@ -153,18 +111,18 @@ IssueTrackerPresenter >> deleteSelectedIssue [
 IssueTrackerPresenter >> fieldChanged [
     "Update the currently selected issue when fields change"
     currentIssue ifNotNil: [ :issue |
-        issue title: detailsForm titleText.
-        issue description: detailsForm descriptionText.
-        issue status: detailsForm selectedStatus.
-        issue priority: detailsForm selectedPriority.
-        issue startDate: detailsForm selectedStartDate.
-        issue duration: detailsForm selectedDuration.
-        issue dueDate: detailsForm selectedDueDate.
+        issueManager updateIssue: issue with: (Dictionary new
+            at: #title put: detailsForm titleText;
+            at: #description put: detailsForm descriptionText;
+            at: #status put: detailsForm selectedStatus;
+            at: #priority put: detailsForm selectedPriority;
+            at: #startDate put: detailsForm selectedStartDate;
+            at: #duration put: detailsForm selectedDuration;
+            at: #dueDate put: detailsForm selectedDueDate;
+            yourself).
         
-        "Cancel previous update task"
+        "Schedule debounced update"
         updateTask ifNotNil: [ updateTask terminate ].
-        
-        "Schedule new update after 300ms delay"
         updateTask := [ 
             300 milliSeconds wait.
             self updateIssueList.
@@ -174,6 +132,8 @@ IssueTrackerPresenter >> fieldChanged [
 
 { #category : 'initialization' }
 IssueTrackerPresenter >> filterChanged [
+	"Same data, filters changed - reapply filters to the current issue list"
+
 	self updateIssueList
 ]
 
@@ -194,7 +154,8 @@ IssueTrackerPresenter >> hasCurrentIssue [
 { #category : 'initialization' }
 IssueTrackerPresenter >> initializePresenters [
 
-	issues := IssueRepository uniqueInstance allIssues.
+	issueManager := IssueManager default.
+	issues := issueManager allIssues.
 	currentIssue := nil.
 
 	toolbar := self instantiate: IssueToolbarPresenter.
@@ -236,10 +197,11 @@ IssueTrackerPresenter >> initializeWindow: aWindowPresenter [
 
 { #category : 'initialization' }
 IssueTrackerPresenter >> issueListChanged [
-    "Refresh the issue list from the repository"
-    issues := IssueRepository uniqueInstance allIssues.
-    issueList items: issues.
-    self updateMoveButtonsState
+	"data changed, reload from source - refresh the issue list from the manager"
+
+	issues := issueManager allIssues.
+	self updateIssueList.
+	self updateMoveButtonsState
 ]
 
 { #category : 'initialization' }
@@ -309,26 +271,6 @@ IssueTrackerPresenter >> openDependencyDialogFor: anIssue [
 ]
 
 { #category : 'initialization' }
-IssueTrackerPresenter >> reorderIssue: draggedIssue dropItem: targetIssue [
-    "Reorder the issue in the repository when dropped on another issue"
-    | allIssues dragIndex targetIndex |
-    
-    allIssues := IssueRepository uniqueInstance allIssues.
-    dragIndex := allIssues indexOf: draggedIssue.
-    targetIndex := allIssues indexOf: targetIssue.
-    
-    "Remove from old position and insert at new position"
-    allIssues removeAt: dragIndex.
-    allIssues add: draggedIssue beforeIndex: targetIndex.
-    
-    "Update the display"
-    issueList items: allIssues.
-    
-    "Keep selection"
-    issueList selectItem: draggedIssue
-]
-
-{ #category : 'initialization' }
 IssueTrackerPresenter >> switchToGanttView [
     "Close current window and open Gantt view at same position"
     | ganttPresenter currentPosition |
@@ -341,26 +283,20 @@ IssueTrackerPresenter >> switchToGanttView [
 
 { #category : 'initialization' }
 IssueTrackerPresenter >> updateIssueList [
-	"Apply filters and update the issue list display"
-	| filteredIssues |
-	
-	filteredIssues := self getFilteredIssues.
-	issueList items: filteredIssues
+	"UPdate the UI - ipdate the displayed issue list with current filters"
+
+	issueList items: self getFilteredIssues
 ]
 
 { #category : 'initialization' }
 IssueTrackerPresenter >> updateMoveButtonsState [
     "Enable/disable move buttons based on selection position"
-    | allIssues currentIndex |
     
     currentIssue ifNil: [
         moveUpButton enabled: false.
         moveDownButton enabled: false.
         ^ self ].
     
-    allIssues := IssueRepository uniqueInstance allIssues.
-    currentIndex := allIssues indexOf: currentIssue.
-    
-    moveUpButton enabled: currentIndex > 1.
-    moveDownButton enabled: currentIndex < allIssues size
+    moveUpButton enabled: (issueManager canMoveUp: currentIssue).
+    moveDownButton enabled: (issueManager canMoveDown: currentIssue)
 ]
