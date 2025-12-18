@@ -13,7 +13,8 @@ Class {
 		'moveDownButton',
 		'viewSwitchButton',
 		'updateTask',
-		'ganttBuilder'
+		'ganttBuilder',
+		'issueManager'
 	],
 	#category : 'IssueTracker',
 	#package : 'IssueTracker'
@@ -30,25 +31,19 @@ IssueTrackerGanttPresenter >> addDependencyTo: anIssue [
 	"Add a single dependency with immediate chart update"
 	| validCandidates selectedIssue |
 	
-	"Use the Handler to find valid candidates from the repository"
-	validCandidates := anIssue dependencyHandler   
-		availableDependenciesIn: IssueRepository uniqueInstance allIssues.
+	"Use the manager to find valid candidates"
+	validCandidates := issueManager availableDependenciesFor: anIssue.
 	
-	validCandidates ifEmpty: [   
+	validCandidates ifEmpty: [ 
 		^ self inform: 'No available issues to add as dependencies' ].
 	
-	selectedIssue := UIManager default   
+	selectedIssue := UIManager default 
 		chooseFrom: (validCandidates collect: #title)
 		values: validCandidates
 		title: 'Select issue that "', anIssue title, '" depends on:'.
 	
 	selectedIssue ifNotNil: [
-		[   
-			anIssue addDependency: selectedIssue.
-			
-			"NEW: Auto-save the changes"
-			IssueRepository uniqueInstance autoSave.
-			
+		(issueManager addDependency: selectedIssue to: anIssue) ifTrue: [
 			"Update the Gantt chart to show the new dependency arrow"
 			self updateGanttChart.
 			
@@ -58,7 +53,8 @@ IssueTrackerGanttPresenter >> addDependencyTo: anIssue [
 				detailsForm loadDependencies: anIssue ].
 			
 			self inform: 'Dependency added successfully'
-		] on: Error do: [ :ex | self inform: ex messageText ] ]
+		] ifFalse: [
+			self inform: 'Failed to add dependency' ] ]
 ]
 
 { #category : 'initialization' }
@@ -127,32 +123,30 @@ IssueTrackerGanttPresenter >> defaultLayout [
 
 { #category : 'initialization' }
 IssueTrackerGanttPresenter >> deleteCurrentIssue [
-	currentIssue ifNotNil: [ :issue |
-		(self confirm: 'Delete issue: ', issue title, '?') ifTrue: [
-			"Remove this issue from all other issues' dependencies"
-			IssueRepository uniqueInstance allIssues do: [ :otherIssue |
-				otherIssue dependencies remove: issue ifAbsent: [] ].
-			
-			IssueRepository uniqueInstance removeIssue: issue.
-			detailsForm clearForm.
-			currentIssue := nil.
-			self updateGanttChart ] ]
+	"Delete the currently selected issue"
+	
+	currentIssue ifNil: [ ^ self ].
+	
+	(self confirm: 'Delete issue "', currentIssue title, '"?') ifTrue: [
+		issueManager deleteIssue: currentIssue.
+		self clearCurrentIssue.
+		self issueListChanged ]
 ]
 
 { #category : 'initialization' }
 IssueTrackerGanttPresenter >> fieldChanged [
-	"Update the currently selected issue when fields change"
 	currentIssue ifNotNil: [ :issue |
-		issue title: detailsForm titleText.
-		issue description: detailsForm descriptionText.
-		issue status: detailsForm selectedStatus.
-		issue priority: detailsForm selectedPriority.
-		issue startDate: detailsForm selectedStartDate.
-		issue duration: detailsForm selectedDuration.
-		issue dueDate: detailsForm selectedDueDate.
+		issueManager updateIssue: issue with: (Dictionary new
+			at: #title put: detailsForm titleText;
+			at: #description put: detailsForm descriptionText;
+			at: #status put: detailsForm selectedStatus;
+			at: #priority put: detailsForm selectedPriority;
+			at: #startDate put: detailsForm selectedStartDate;
+			at: #duration put: detailsForm selectedDuration;
+			at: #dueDate put: detailsForm selectedDueDate;
+			yourself).
 		self updateGanttChart.
-		"Refresh dependencies display if they changed"
-		detailsForm ensureDependenciesInitialized.    "Added this line"
+		detailsForm ensureDependenciesInitialized.
 		detailsForm loadDependencies: issue ]
 ]
 
@@ -167,7 +161,7 @@ IssueTrackerGanttPresenter >> getFilteredIssues [
 	| filter |
 	
 	filter := IssueFilter fromToolbar: toolbar.
-	^ filter applyTo: IssueRepository uniqueInstance allIssues
+	^ filter applyTo: issueManager allIssues
 ]
 
 { #category : 'initialization' }
@@ -177,37 +171,38 @@ IssueTrackerGanttPresenter >> hasCurrentIssue [
 
 { #category : 'initialization' }
 IssueTrackerGanttPresenter >> initializePresenters [
-
-	issues := IssueRepository uniqueInstance allIssues.
+	
+	issueManager := IssueManager default.
+	issues := issueManager allIssues.
 	currentIssue := nil.
-
+	
 	toolbar := self instantiate: IssueToolbarPresenter.
 	detailsForm := self instantiate: IssueDetailsPresenter.
 	ganttCanvas := self instantiate: SpRoassalPresenter.
-
+	
 	"Add view switch button"
 	viewSwitchButton := self newButton
-		                    label: 'Table View';
-		                    icon: (self iconNamed: #smallConfiguration);
-		                    help: 'Switch to table view';
-		                    action: [ self switchToTableView ];
-		                    yourself.
-
+		label: 'Table View';
+		icon: (self iconNamed: #smallConfiguration);
+		help: 'Switch to table view';
+		action: [ self switchToTableView ];
+		yourself.
+	
 	"Add reordering buttons"
 	moveUpButton := self newButton
-		                icon: (self iconNamed: #up);
-		                help: 'Move selected issue up in order';
-		                action: [ self moveIssueUp ];
-		                enabled: false;
-		                yourself.
-
+		icon: (self iconNamed: #up);
+		help: 'Move selected issue up in order';
+		action: [ self moveIssueUp ];
+		enabled: false;
+		yourself.
+	
 	moveDownButton := self newButton
-		                  icon: (self iconNamed: #down);
-		                  help: 'Move selected issue down in order';
-		                  action: [ self moveIssueDown ];
-		                  enabled: false;
-		                  yourself.
-
+		icon: (self iconNamed: #down);
+		help: 'Move selected issue down in order';
+		action: [ self moveIssueDown ];
+		enabled: false;
+		yourself.
+	
 	self buildGanttChart
 ]
 
@@ -222,9 +217,9 @@ IssueTrackerGanttPresenter >> initializeWindow: aWindowPresenter [
 
 { #category : 'initialization' }
 IssueTrackerGanttPresenter >> issueListChanged [
-	issues := IssueRepository uniqueInstance allIssues.
+	"Callback when issues list changes"
+	issues := issueManager allIssues.
 	self updateGanttChart
-
 ]
 
 { #category : 'initialization' }
@@ -247,42 +242,24 @@ IssueTrackerGanttPresenter >> manageDependenciesFor: anIssue [
 
 { #category : 'initialization' }
 IssueTrackerGanttPresenter >> moveIssueDown [
-    | repository allIssues currentIndex itemToMove |
-    currentIssue ifNil: [ ^ self ].
-    
-    itemToMove := currentIssue.
-    repository := IssueRepository uniqueInstance.
-    allIssues := repository allIssues.
-    currentIndex := allIssues indexOf: itemToMove.
-    
-    currentIndex < allIssues size ifTrue: [
-        "Swap directly in the repository's internal collection"
-        repository swapIssueAt: currentIndex with: currentIndex + 1.
-        
-        "Rebuild the Gantt chart"
-        currentIssue := itemToMove.  "Maintain selection"
-        self updateGanttChart.
-        self updateMoveButtonsState ]
+	"Move the selected issue down in the list"
+	
+	currentIssue ifNil: [ ^ self ].
+	
+	(issueManager moveIssueDown: currentIssue) ifTrue: [
+		self updateGanttChart.
+		self updateMoveButtonsState ]
 ]
 
 { #category : 'initialization' }
 IssueTrackerGanttPresenter >> moveIssueUp [
-    | repository allIssues currentIndex itemToMove |
-    currentIssue ifNil: [ ^ self ].
-    
-    itemToMove := currentIssue.
-    repository := IssueRepository uniqueInstance.
-    allIssues := repository allIssues.
-    currentIndex := allIssues indexOf: itemToMove.
-    
-    currentIndex > 1 ifTrue: [
-        "Swap directly in the repository's internal collection"
-        repository swapIssueAt: currentIndex with: currentIndex - 1.
-        
-        "Rebuild the Gantt chart"
-        currentIssue := itemToMove.  "Maintain selection"
-        self updateGanttChart.
-        self updateMoveButtonsState ]
+	"Move the selected issue up in the list"
+	
+	currentIssue ifNil: [ ^ self ].
+	
+	(issueManager moveIssueUp: currentIssue) ifTrue: [
+		self updateGanttChart.
+		self updateMoveButtonsState ]
 ]
 
 { #category : 'initialization' }
@@ -359,17 +336,13 @@ IssueTrackerGanttPresenter >> updateGanttChart [
 
 { #category : 'initialization' }
 IssueTrackerGanttPresenter >> updateMoveButtonsState [
-    "Enable/disable move buttons based on selection position"
-    | allIssues currentIndex |
-    
-    currentIssue ifNil: [
-        moveUpButton enabled: false.
-        moveDownButton enabled: false.
-        ^ self ].
-    
-    allIssues := IssueRepository uniqueInstance allIssues.
-    currentIndex := allIssues indexOf: currentIssue.
-    
-    moveUpButton enabled: currentIndex > 1.
-    moveDownButton enabled: currentIndex < allIssues size
+	"Enable/disable move buttons based on selection position"
+	
+	currentIssue ifNil: [
+		moveUpButton enabled: false.
+		moveDownButton enabled: false.
+		^ self ].
+	
+	moveUpButton enabled: (issueManager canMoveUp: currentIssue).
+	moveDownButton enabled: (issueManager canMoveDown: currentIssue)
 ]

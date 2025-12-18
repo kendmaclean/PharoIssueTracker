@@ -178,6 +178,15 @@ IssueTrackerPresenter >> filterChanged [
 ]
 
 { #category : 'initialization' }
+IssueTrackerPresenter >> getFilteredIssues [
+	"Get issues filtered by current toolbar settings"
+	| filter |
+	
+	filter := IssueFilter fromToolbar: toolbar.
+	^ filter applyTo: issues
+]
+
+{ #category : 'initialization' }
 IssueTrackerPresenter >> hasCurrentIssue [
 	^ currentIssue notNil
 ]
@@ -332,38 +341,10 @@ IssueTrackerPresenter >> switchToGanttView [
 
 { #category : 'initialization' }
 IssueTrackerPresenter >> updateIssueList [
+	"Apply filters and update the issue list display"
 	| filteredIssues |
-	filteredIssues := issues.
 	
-	"Apply closed filter"
-	toolbar hideClosedIssues ifTrue: [
-		filteredIssues := filteredIssues reject: [ :issue | 
-			issue status = #closed ] ].
-	
-	"Apply due date filter"
-	toolbar dueDateFilter = #today ifTrue: [
-		| today |
-		today := Date today.
-		filteredIssues := filteredIssues select: [ :issue |
-			| startDate endDate |
-			startDate := issue computedStartDate.
-			endDate := issue computedDueDate.
-			startDate notNil and: [ endDate notNil and: [
-				"Issue is active today if today falls between start and end dates"
-				today between: startDate asDate and: endDate asDate ] ] ] ].
-	
-	toolbar dueDateFilter = #week ifTrue: [
-		| today weekFromNow |
-		today := Date today.
-		weekFromNow := today addDays: 7.
-		filteredIssues := filteredIssues select: [ :issue |
-			| startDate endDate |
-			startDate := issue computedStartDate.
-			endDate := issue computedDueDate.
-			startDate notNil and: [ endDate notNil and: [
-				"Issue is active this week if it overlaps with the week period"
-				(startDate asDate <= weekFromNow) and: [ endDate asDate >= today ] ] ] ] ].
-	
+	filteredIssues := self getFilteredIssues.
 	issueList items: filteredIssues
 ]
 

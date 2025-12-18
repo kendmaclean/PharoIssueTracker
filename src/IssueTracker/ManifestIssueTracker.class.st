@@ -20,7 +20,7 @@ ManifestIssueTracker class >> ruleCascadedNextPutAllsRuleV1FalsePositive [
 ManifestIssueTracker class >> ruleGuardingClauseRuleV1FalsePositive [
 
 	<ignoreForCoverage>
-	^ #(#(#(#RGMethodDefinition #(#IssueTrackerPresenter #moveIssueDown #false)) #'2025-12-08T14:16:19.520577-05:00') #(#(#RGMethodDefinition #(#IssueTrackerPresenter #moveIssueUp #false)) #'2025-12-08T14:17:08.952791-05:00') #(#(#RGMethodDefinition #(#IssueTrackerGanttPresenter #moveIssueUp #false)) #'2025-12-10T15:55:33.645052-05:00') )
+	^ #(#(#(#RGMethodDefinition #(#IssueTrackerPresenter #moveIssueDown #false)) #'2025-12-08T14:16:19.520577-05:00') #(#(#RGMethodDefinition #(#IssueTrackerPresenter #moveIssueUp #false)) #'2025-12-08T14:17:08.952791-05:00') #(#(#RGMethodDefinition #(#IssueTrackerGanttPresenter #moveIssueUp #false)) #'2025-12-10T15:55:33.645052-05:00') #(#(#RGMethodDefinition #(#IssueTrackerGanttPresenter #moveIssueDown #false)) #'2025-12-17T16:11:02.608445-05:00') #(#(#RGMethodDefinition #(#IssueTrackerGanttPresenter #deleteCurrentIssue #false)) #'2025-12-17T16:12:04.895992-05:00') )
 ]
 
 { #category : 'code-critics' }
@@ -34,5 +34,5 @@ ManifestIssueTracker class >> ruleLongMethodsRuleV1FalsePositive [
 ManifestIssueTracker class >> ruleReGuardClauseRuleV1FalsePositive [
 
 	<ignoreForCoverage>
-	^ #(#(#(#RGMethodDefinition #(#IssueTrackerPresenter #moveIssueDown #false)) #'2025-12-08T14:16:14.444313-05:00') #(#(#RGMethodDefinition #(#IssueTrackerPresenter #moveIssueUp #false)) #'2025-12-08T14:16:58.738102-05:00') #(#(#RGMethodDefinition #(#IssueTrackerGanttPresenter #moveIssueUp #false)) #'2025-12-10T15:55:29.58778-05:00') )
+	^ #(#(#(#RGMethodDefinition #(#IssueTrackerPresenter #moveIssueDown #false)) #'2025-12-08T14:16:14.444313-05:00') #(#(#RGMethodDefinition #(#IssueTrackerPresenter #moveIssueUp #false)) #'2025-12-08T14:16:58.738102-05:00') #(#(#RGMethodDefinition #(#IssueTrackerGanttPresenter #moveIssueUp #false)) #'2025-12-10T15:55:29.58778-05:00') #(#(#RGMethodDefinition #(#IssueTrackerGanttPresenter #moveIssueDown #false)) #'2025-12-17T16:11:32.817633-05:00') #(#(#RGMethodDefinition #(#IssueTrackerGanttPresenter #deleteCurrentIssue #false)) #'2025-12-17T16:12:07.838728-05:00') )
 ]
