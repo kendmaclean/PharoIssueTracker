@@ -18,7 +18,34 @@ Class {
 { #category : 'instance creation' }
 TestIssueRepository class >> reset [
 	"Reset only the test singleton"
+
+	"First, reset the IssueManager that depends on this repository"
+	IssueManager reset.
+
 	TestInstance := nil
+]
+
+{ #category : 'instance creation' }
+TestIssueRepository class >> resetAll [
+	"Complete reset: clears the singleton AND deletes the persistence file.
+    Use this to completely clear all issues from memory and disk."
+
+	| persistenceFile |
+	"First do a regular reset"
+	self reset.
+
+	"Get persistence file location - don't call uniqueInstance as it might reload!"
+	persistenceFile := CustomPersistenceFileName
+		                   ifNil: [
+			                   self class testPersistenceFile ]
+		                   ifNotNil: [ CustomPersistenceFileName ].
+
+	"Clear the custom persistence file name"
+	CustomPersistenceFileName := nil.
+
+	"Delete the persistence file if it exists"
+	persistenceFile exists ifFalse: [ ^ self ].
+	persistenceFile delete
 ]
 
 { #category : 'instance creation' }

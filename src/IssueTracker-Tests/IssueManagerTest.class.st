@@ -186,8 +186,8 @@ IssueManagerTest >> testExportAndImport [
 	self assert: tempFile exists.
 	
 	"Reset and import"
-	IssueRepository reset.
-	loadedRepository := IssueRepository uniqueInstance.
+	TestIssueRepository reset.
+	loadedRepository := TestIssueRepository uniqueInstance.
 	loadedRepository loadFromFile: tempFile.
 	
 	"Verify"
@@ -236,8 +236,8 @@ IssueManagerTest >> testSaveAndLoad [
 	self assert: tempFile exists.
 	
 	"Create new repository and load"
-	IssueRepository reset.
-	loadedRepository := IssueRepository uniqueInstance.
+	TestIssueRepository reset.
+	loadedRepository := TestIssueRepository uniqueInstance.
 	loadedRepository loadFromFile: tempFile.
 	
 	"Verify loaded issues"

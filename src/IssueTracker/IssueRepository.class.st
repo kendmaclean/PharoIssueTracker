@@ -15,7 +15,47 @@ Class {
 
 { #category : 'instance creation' }
 IssueRepository class >> reset [
+    "Reset the singleton instance to nil.
+    This does NOT delete the persistence file - useful for tests that verify persistence.
+    Use resetAll to also delete the file."
+    
+    "First, reset the IssueManager that depends on this repository"
+    IssueManager reset.
+    
+    "Clear the singleton instance"
     UniqueInstance := nil
+]
+
+{ #category : 'instance creation' }
+IssueRepository class >> resetAll [
+    "Complete reset: clears the singleton AND deletes the persistence file.
+    Use this to completely clear all issues from memory and disk."
+    | persistenceFile |
+    
+    "First do a regular reset"
+    self reset.
+    
+    "Get persistence file location - don't call uniqueInstance as it might reload!"
+    persistenceFile := CustomPersistenceFileName 
+        ifNil: [ FileLocator imageDirectory / 'IssueTracker' / 'issues.fuel' ]
+        ifNotNil: [ CustomPersistenceFileName ].
+    
+    "Clear the custom persistence file name"
+    CustomPersistenceFileName := nil.
+    
+    "Delete the persistence file if it exists"
+    persistenceFile exists ifFalse: [ ^ self ].
+    persistenceFile delete
+]
+
+{ #category : 'instance creation' }
+IssueRepository class >> resetAndInitialize [
+    "Complete reset and return a fresh initialized instance.
+    Use this from Playground after resetAll to get a clean start."
+    <script>
+    
+    self resetAll.
+    ^ self uniqueInstance
 ]
 
 { #category : 'instance creation' }
