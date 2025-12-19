@@ -42,3 +42,22 @@ TestIssueRepository >> defaultPersistenceFileName [
 	^ CustomPersistenceFileName ifNil: [
 		  self class testPersistenceFile ]
 ]
+
+{ #category : 'persistence' }
+TestIssueRepository >> testPersistence [
+	"Test that save/load works properly"
+
+	| repo savedOk loadedOk |
+	repo := TestIssueRepository uniqueInstance.
+
+	"Test saving"
+	savedOk := repo saveToFile.
+
+	savedOk
+		ifTrue: [ "Test loading"
+			loadedOk := repo loadFromFile.
+			loadedOk
+				ifTrue: [ self inform: 'Persistence test successful!' ]
+				ifFalse: [ self inform: 'Load test failed!' ] ]
+		ifFalse: [ self inform: 'Save test failed!' ]
+]

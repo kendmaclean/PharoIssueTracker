@@ -8,8 +8,9 @@ Class {
 		'issue',
 		'onDependencyChangedBlock'
 	],
-	#category : 'IssueTracker',
-	#package : 'IssueTracker'
+	#category : 'IssueTracker-UI',
+	#package : 'IssueTracker',
+	#tag : 'UI'
 }
 
 { #category : 'controlling' }

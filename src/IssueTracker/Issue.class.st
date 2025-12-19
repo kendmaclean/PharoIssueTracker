@@ -14,8 +14,9 @@ Class {
 		'dependencies',
 		'isMilestone'
 	],
-	#category : 'IssueTracker',
-	#package : 'IssueTracker'
+	#category : 'IssueTracker-Issue',
+	#package : 'IssueTracker',
+	#tag : 'Issue'
 }
 
 { #category : 'initialization' }

@@ -327,7 +327,7 @@ IssueFilterTest >> testIssueWithoutDates [
 	filter dueDateFilter: #today.
 	result := filter applyTo: sampleIssues.
 
-	"Issue without dates default to current date"
+	"Issues without dates default to current date"
 	self assert: (result includes: issueWithoutDates)
 ]
 

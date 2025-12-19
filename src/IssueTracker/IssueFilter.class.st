@@ -5,8 +5,9 @@ Class {
 		'hideClosedIssues',
 		'dueDateFilter'
 	],
-	#category : 'IssueTracker',
-	#package : 'IssueTracker'
+	#category : 'IssueTracker-Issue',
+	#package : 'IssueTracker',
+	#tag : 'Issue'
 }
 
 { #category : 'instance creation' }

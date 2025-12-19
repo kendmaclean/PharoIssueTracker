@@ -1,7 +1,8 @@
 Trait {
 	#name : 'TPersistenceMenuTrait',
-	#category : 'IssueTracker',
-	#package : 'IssueTracker'
+	#category : 'IssueTracker-UI',
+	#package : 'IssueTracker',
+	#tag : 'UI'
 }
 
 { #category : 'persistence' }

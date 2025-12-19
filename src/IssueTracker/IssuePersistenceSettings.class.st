@@ -6,14 +6,21 @@ Class {
 		'testButton',
 		'backupButton'
 	],
-	#category : 'IssueTracker',
-	#package : 'IssueTracker'
+	#category : 'IssueTracker-Issue',
+	#package : 'IssueTracker',
+	#tag : 'Issue'
 }
 
 { #category : 'instance creation' }
 IssuePersistenceSettings class >> open [
 	<script>
 	^ self new open
+]
+
+{ #category : 'accessing' }
+IssuePersistenceSettings >> backupButton [
+
+	^ backupButton
 ]
 
 { #category : 'initialization' }
@@ -58,6 +65,18 @@ IssuePersistenceSettings >> initializePresenters [
 		label: 'Create Backup Now';
 		action: [ self createBackup ];
 		yourself
+]
+
+{ #category : 'accessing' }
+IssuePersistenceSettings >> locationLabel [
+
+	^ locationLabel
+]
+
+{ #category : 'accessing' }
+IssuePersistenceSettings >> testButton [
+
+	^ testButton
 ]
 
 { #category : 'initialization' }

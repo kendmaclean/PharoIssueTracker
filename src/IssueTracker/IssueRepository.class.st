@@ -8,8 +8,9 @@ Class {
 		'CustomPersistenceFileName',
 		'UniqueInstance'
 	],
-	#category : 'IssueTracker',
-	#package : 'IssueTracker'
+	#category : 'IssueTracker-Issue',
+	#package : 'IssueTracker',
+	#tag : 'Issue'
 }
 
 { #category : 'instance creation' }
@@ -77,9 +78,15 @@ IssueRepository >> defaultPersistenceFileName [
 
 { #category : 'persistence' }
 IssueRepository >> ensurePersistenceDirectory [
-	"Ensure the persistence directory exists"
+	"Ensure the default persistence directory exists"
+	^ self ensurePersistenceDirectoryFor: self defaultPersistenceFileName
+]
+
+{ #category : 'persistence' }
+IssueRepository >> ensurePersistenceDirectoryFor: aFileReference [
+	"Ensure the directory for the given file reference exists"
 	| directory |
-	directory := self defaultPersistenceFileName parent.
+	directory := aFileReference parent.
 	directory ensureCreateDirectory.
 	^ directory
 ]
@@ -141,17 +148,16 @@ IssueRepository >> saveToFile [
 
 { #category : 'persistence' }
 IssueRepository >> saveToFile: aFileReference [
-	"Save all issues to the specified file using Fuel
-	Fuel automatically handles all serialization!"
-
-	self ensurePersistenceDirectory.
-
+	"Save all issues to the specified file using Fuel"
+	
+	self ensurePersistenceDirectoryFor: aFileReference.
+	
 	[ 
-	FLSerializer serialize: issues toFileNamed: aFileReference fullName.
-	^ true ] 	on: Error
-		do: [ :ex |
-			UIManager default inform: 'Error saving issues: ' , ex messageText.
-			^ false ]
+		FLSerializer serialize: issues toFileNamed: aFileReference fullName.
+		^ true
+	] on: Error do: [ :ex |
+		UIManager default inform: 'Error saving issues: ' , ex messageText.
+		^ false ]
 ]
 
 { #category : 'initialization' }

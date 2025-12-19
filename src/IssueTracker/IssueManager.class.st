@@ -7,8 +7,9 @@ Class {
 	#classInstVars : [
 		'default'
 	],
-	#category : 'IssueTracker',
-	#package : 'IssueTracker'
+	#category : 'IssueTracker-Issue',
+	#package : 'IssueTracker',
+	#tag : 'Issue'
 }
 
 { #category : 'instance creation' }
