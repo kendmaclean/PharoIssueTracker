@@ -46,7 +46,7 @@ IssuePersistenceSettings >> defaultLayout [
 IssuePersistenceSettings >> initializePresenters [
 	
 	locationLabel := self newLabel
-		label: IssueRepository uniqueInstance defaultPersistenceFile fullName;
+		label: IssueRepository uniqueInstance defaultPersistenceFileName fullName;
 		yourself.
 	
 	testButton := self newButton

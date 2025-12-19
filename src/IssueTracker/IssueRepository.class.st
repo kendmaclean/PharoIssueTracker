@@ -5,8 +5,8 @@ Class {
 		'issues'
 	],
 	#classVars : [
-		'UniqueInstance',
-		'customPersistenceFile'
+		'CustomPersistenceFileName',
+		'UniqueInstance'
 	],
 	#category : 'IssueTracker',
 	#package : 'IssueTracker'
@@ -24,6 +24,9 @@ IssueRepository class >> uniqueInstance [
 
 { #category : 'initialization' }
 IssueRepository >> addIssue: anIssue [
+	
+	anIssue ifNil: [ ^ self error: 'Parameter cannot be nil' ].
+	
 	issues add: anIssue.
 	self autoSave
 ]
@@ -49,7 +52,7 @@ IssueRepository >> createBackup [
 	].
 	
 	timestamp := DateAndTime now asString copyReplaceAll: ':' with: '-'.
-	backupFile := self defaultPersistenceFile parent / 
+	backupFile := self defaultPersistenceFileName parent / 
 		('issues-backup-', timestamp, '.fuel').
 	
 	(self saveToFile: backupFile) ifTrue: [ 
@@ -60,15 +63,15 @@ IssueRepository >> createBackup [
 ]
 
 { #category : 'persistence' }
-IssueRepository >> customPersistenceFile: aFileReference [
+IssueRepository >> customPersistenceFileName: aFileReference [
 	"Set a custom persistence file location"
-	customPersistenceFile := aFileReference
+	CustomPersistenceFileName := aFileReference
 ]
 
 { #category : 'persistence' }
-IssueRepository >> defaultPersistenceFile [
+IssueRepository >> defaultPersistenceFileName [
 	"Return the default file location for persisting issues"
-	^ customPersistenceFile ifNil: [ 
+	^ CustomPersistenceFileName ifNil: [ 
 		FileLocator imageDirectory / 'IssueTracker' / 'issues.fuel' ]
 ]
 
@@ -76,7 +79,7 @@ IssueRepository >> defaultPersistenceFile [
 IssueRepository >> ensurePersistenceDirectory [
 	"Ensure the persistence directory exists"
 	| directory |
-	directory := self defaultPersistenceFile parent.
+	directory := self defaultPersistenceFileName parent.
 	directory ensureCreateDirectory.
 	^ directory
 ]
@@ -106,7 +109,7 @@ IssueRepository >> issues [
 { #category : 'persistence' }
 IssueRepository >> loadFromFile [
 	"Load issues from the default file using Fuel"
-	^ self loadFromFile: self defaultPersistenceFile
+	^ self loadFromFile: self defaultPersistenceFileName
 ]
 
 { #category : 'persistence' }
@@ -133,23 +136,22 @@ IssueRepository >> removeIssue: anIssue [
 { #category : 'persistence' }
 IssueRepository >> saveToFile [
 	"Save all issues to the default file using Fuel"
-	^ self saveToFile: self defaultPersistenceFile
+	^ self saveToFile: self defaultPersistenceFileName
 ]
 
 { #category : 'persistence' }
 IssueRepository >> saveToFile: aFileReference [
 	"Save all issues to the specified file using Fuel
 	Fuel automatically handles all serialization!"
-	
+
 	self ensurePersistenceDirectory.
-	
+
 	[ 
-		FLSerializer serialize: issues toFileNamed: aFileReference fullName.
-		^ true
-	] on: Error do: [ :ex |
-		UIManager default inform: 'Error saving issues: ', ex messageText.
-		^ false
-	]
+	FLSerializer serialize: issues toFileNamed: aFileReference fullName.
+	^ true ] 	on: Error
+		do: [ :ex |
+			UIManager default inform: 'Error saving issues: ' , ex messageText.
+			^ false ]
 ]
 
 { #category : 'initialization' }

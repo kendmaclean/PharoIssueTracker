@@ -38,7 +38,7 @@ TPersistenceMenuTrait >> changeStorageLocation [
 	"Allow user to change the default persistence file location"
 	| newFile currentFile |
 	
-	currentFile := IssueRepository uniqueInstance defaultPersistenceFile.
+	currentFile := IssueRepository uniqueInstance defaultPersistenceFileName.
 	
 	self inform: 'Current location: ', currentFile fullName.
 	
@@ -58,7 +58,7 @@ Continue?') ifTrue: [
 			"Save to new location"
 			(IssueRepository uniqueInstance saveToFile: newFile) ifTrue: [
 				"Update the default location"
-				IssueRepository uniqueInstance customPersistenceFile: newFile.
+				IssueRepository uniqueInstance customPersistenceFileName: newFile.
 				self inform: 'Storage location changed to: ', newFile fullName, '
 
 Issues have been saved to the new location.'

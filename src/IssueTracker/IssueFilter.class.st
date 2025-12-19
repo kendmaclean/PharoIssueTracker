@@ -24,20 +24,24 @@ IssueFilter class >> new [
 { #category : 'initialization' }
 IssueFilter >> applyClosedFilter: issues [
 	"Filter out closed issues if hideClosedIssues is true"
-	
+
 	hideClosedIssues ifFalse: [ ^ issues ].
-	
-	^ issues reject: [ :issue | issue status = #closed ]
+
+	"^ issues reject: [ :issue | issue status = #closed ]"
+	^ issues reject: [ :issue | 
+		"reject issues whose status is in this set"
+	    #(closed resolved) includes: issue status ]
 ]
 
 { #category : 'initialization' }
 IssueFilter >> applyDueDateFilter: issues [
 	"Apply due date filter based on dueDateFilter setting"
-	
+
 	dueDateFilter ifNil: [ ^ issues ].
-	
+
 	dueDateFilter = #today ifTrue: [ ^ self filterActiveToday: issues ].
 	dueDateFilter = #week ifTrue: [ ^ self filterActiveThisWeek: issues ].
+	dueDateFilter = #all ifTrue: [ ^ issues ].
 	
 	^ issues
 ]
@@ -126,7 +130,8 @@ IssueFilter >> hideClosedIssues: aBoolean [
 
 { #category : 'initialization' }
 IssueFilter >> initialize [
+
 	super initialize.
 	hideClosedIssues := false.
-	dueDateFilter := nil
+	dueDateFilter := #all
 ]
