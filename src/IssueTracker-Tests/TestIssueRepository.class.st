@@ -36,8 +36,7 @@ TestIssueRepository class >> resetAll [
 
 	"Get persistence file location - don't call uniqueInstance as it might reload!"
 	persistenceFile := CustomPersistenceFileName
-		                   ifNil: [
-			                   self class testPersistenceFile ]
+		                   ifNil: [ self testPersistenceFile ]
 		                   ifNotNil: [ CustomPersistenceFileName ].
 
 	"Clear the custom persistence file name"
