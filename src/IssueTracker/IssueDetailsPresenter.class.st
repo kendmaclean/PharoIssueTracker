@@ -484,6 +484,6 @@ IssueDetailsPresenter >> updateIssue [
 	"Override to add auto-save after updating"
 	| result |
 	result := super updateIssue.
-	IssueRepository uniqueInstance autoSave.
+	TestIssueRepository uniqueInstance autoSave.
 	^ result
 ]

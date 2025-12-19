@@ -83,7 +83,7 @@ IssuePersistenceSettings >> testButton [
 IssuePersistenceSettings >> testPersistence [
 	"Test that save/load works properly"
 	| repo savedOk loadedOk |
-	repo := IssueRepository uniqueInstance.
+	repo := TestIssueRepository uniqueInstance.
 	
 	"Test saving"
 	savedOk := repo saveToFile.

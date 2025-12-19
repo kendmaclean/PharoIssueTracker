@@ -201,8 +201,8 @@ IssuePersistenceSettingsTest >> testConcurrentSaveOperations [
 		self assert: testRepository saveToFile ].
 	
 	"Data should still be intact"
-	IssueRepository reset.
-	testRepository := IssueRepository uniqueInstance.
+	TestIssueRepository reset.
+	testRepository := TestIssueRepository uniqueInstance.
 	self assert: testRepository loadFromFile.
 	self assert: testRepository allIssues size equals: 1
 ]
@@ -251,8 +251,8 @@ IssuePersistenceSettingsTest >> testExportAndImport [
 	self assert: (testRepository exportToFile: exportFile).
 	
 	"Reset and import"
-	IssueRepository reset.
-	testRepository := IssueRepository uniqueInstance.
+	TestIssueRepository reset.
+	testRepository := TestIssueRepository uniqueInstance.
 	self assert: (testRepository loadFromFile: exportFile).
 	
 	imported := testRepository allIssues first.
@@ -272,22 +272,21 @@ IssuePersistenceSettingsTest >> testInitializePresenters [
 { #category : 'running' }
 IssuePersistenceSettingsTest >> testIssuesWithNilValues [
 	"Test persistence of issues with nil fields"
-	
+
 	| issue loaded |
-	
 	issue := Issue new
-		title: 'Minimal Issue';
-		yourself.
-	
+		         title: 'Minimal Issue';
+		         yourself.
+
 	"Don't set description, dates, etc - leave as nil"
-	
+
 	testRepository addIssue: issue.
 	testRepository saveToFile.
-	
-	IssueRepository reset.
-	testRepository := IssueRepository uniqueInstance.
+
+	TestIssueRepository reset.
+	testRepository := TestIssueRepository uniqueInstance.
 	testRepository loadFromFile.
-	
+
 	loaded := testRepository allIssues first.
 	self assert: loaded title equals: 'Minimal Issue'.
 	self assert: loaded description isNil
@@ -296,23 +295,24 @@ IssuePersistenceSettingsTest >> testIssuesWithNilValues [
 { #category : 'running' }
 IssuePersistenceSettingsTest >> testIssuesWithSpecialCharacters [
 	"Test persistence of issues with special characters"
-	
+
 	| issue loaded |
-	
 	issue := Issue new
-		title: 'Issue with "quotes" and <brackets>';
-		description: 'Special chars: éàü ñ 中文 🔥';
-		yourself.
-	
+		         title: 'Issue with "quotes" and <brackets>';
+		         description: 'Special chars: éàü ñ 中文 🔥';
+		         yourself.
+
 	testRepository addIssue: issue.
 	testRepository saveToFile.
-	
-	IssueRepository reset.
-	testRepository := IssueRepository uniqueInstance.
+
+	TestIssueRepository reset.
+	testRepository := TestIssueRepository uniqueInstance.
 	testRepository loadFromFile.
-	
+
 	loaded := testRepository allIssues first.
-	self assert: loaded title equals: 'Issue with "quotes" and <brackets>'.
+	self
+		assert: loaded title
+		equals: 'Issue with "quotes" and <brackets>'.
 	self assert: loaded description equals: 'Special chars: éàü ñ 中文 🔥'
 ]
 
@@ -356,8 +356,8 @@ IssuePersistenceSettingsTest >> testLoadFromCustomFile [
 	testRepository saveToFile: customFile.
 	
 	"Reset and load"
-	IssueRepository reset.
-	testRepository := IssueRepository uniqueInstance.
+	TestIssueRepository reset.
+	testRepository := TestIssueRepository uniqueInstance.
 	
 	self assert: (testRepository loadFromFile: customFile).
 	self assert: testRepository allIssues size equals: 1
@@ -427,8 +427,8 @@ IssuePersistenceSettingsTest >> testPersistencePreservesIssueData [
 	self assert: testRepository saveToFile.
 	
 	"Reset and reload"
-	IssueRepository reset.
-	testRepository := IssueRepository uniqueInstance.
+	TestIssueRepository reset.
+	testRepository := TestIssueRepository uniqueInstance.
 	self assert: testRepository loadFromFile.
 	
 	loaded := testRepository allIssues first.
@@ -530,8 +530,8 @@ IssuePersistenceSettingsTest >> testRoundTripPreservesComplexData [
 	
 	"Save and reload"
 	self assert: testRepository saveToFile.
-	IssueRepository reset.
-	testRepository := IssueRepository uniqueInstance.
+	TestIssueRepository reset.
+	testRepository := TestIssueRepository uniqueInstance.
 	self assert: testRepository loadFromFile.
 	
 	"Verify"
@@ -598,8 +598,8 @@ IssuePersistenceSettingsTest >> testVeryLargeNumberOfIssues [
 	"Test persistence"
 	self assert: testRepository saveToFile.
 	
-	IssueRepository reset.
-	testRepository := IssueRepository uniqueInstance.
+	TestIssueRepository reset.
+	testRepository := TestIssueRepository uniqueInstance.
 	self assert: testRepository loadFromFile.
 	
 	self assert: testRepository allIssues size equals: 100
