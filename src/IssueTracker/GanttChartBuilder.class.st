@@ -33,7 +33,7 @@ GanttChartBuilder >> addDateAxisFrom: baselineDate to: maxDate issueCount: issue
 		xPosition := leftMargin + (days * 20).
 
 		label := RSLabel new
-			         text: currentDate yyyymmdd;
+			         text: currentDate asDate yyyymmdd;
 			         fontSize: 8;
 			         yourself.
 
@@ -43,7 +43,7 @@ GanttChartBuilder >> addDateAxisFrom: baselineDate to: maxDate issueCount: issue
 		"Add vertical grid line"
 		self addGridLineAt: xPosition height: issueCount * 35.
 
-		currentDate := currentDate addDays: interval ].
+		currentDate := currentDate asDate addDays: interval ].
 
 	"Add final date"
 	finalDays := maxDate julianDayNumber - baselineDate julianDayNumber.
