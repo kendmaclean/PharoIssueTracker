@@ -172,38 +172,38 @@ IssueTrackerGanttPresenter >> hasCurrentIssue [
 
 { #category : 'initialization' }
 IssueTrackerGanttPresenter >> initializePresenters [
-	
+
 	issueManager := IssueManager default.
 	issues := issueManager allIssues.
 	currentIssue := nil.
-	
+
 	toolbar := self instantiate: IssueToolbarPresenter.
 	detailsForm := self instantiate: IssueDetailsPresenter.
 	ganttCanvas := self instantiate: SpRoassalPresenter.
-	
+
 	"Add view switch button"
 	viewSwitchButton := self newButton
-		label: 'Table View';
-		icon: (self iconNamed: #smallConfiguration);
-		help: 'Switch to table view';
-		action: [ self switchToTableView ];
-		yourself.
-	
+		                    label: 'Table View';
+		                    icon: (self iconNamed: #smallConfiguration);
+		                    help: 'Switch to table view';
+		                    action: [ self switchToTableView ];
+		                    yourself.
+
 	"Add reordering buttons"
 	moveUpButton := self newButton
-		icon: (self iconNamed: #up);
-		help: 'Move selected issue up in order';
-		action: [ self moveIssueUp ];
-		enabled: false;
-		yourself.
-	
+		                icon: (self iconNamed: #up);
+		                help: 'Move selected issue up in order';
+		                action: [ self moveIssueUp ];
+		                enabled: false;
+		                yourself.
+
 	moveDownButton := self newButton
-		icon: (self iconNamed: #down);
-		help: 'Move selected issue down in order';
-		action: [ self moveIssueDown ];
-		enabled: false;
-		yourself.
-	
+		                  icon: (self iconNamed: #down);
+		                  help: 'Move selected issue down in order';
+		                  action: [ self moveIssueDown ];
+		                  enabled: false;
+		                  yourself.
+	toolbar refreshStatus.
 	self buildGanttChart
 ]
 
@@ -218,9 +218,10 @@ IssueTrackerGanttPresenter >> initializeWindow: aWindowPresenter [
 
 { #category : 'initialization' }
 IssueTrackerGanttPresenter >> issueListChanged [
-	"Callback when issues list changes"
-	issues := issueManager allIssues.
-	self updateGanttChart
+      issues := issueManager allIssues.
+      self updateGanttChart updateMoveButtonsState.
+      toolbar refreshStatus.  "refresh the status label"
+
 ]
 
 { #category : 'initialization' }

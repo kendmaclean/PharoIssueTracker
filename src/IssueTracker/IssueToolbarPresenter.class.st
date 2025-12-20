@@ -10,7 +10,8 @@ Class {
 		'saveButton',
 		'dueDateFilter',
 		'hideClosedIssues',
-		'ganttButton'
+		'ganttButton',
+		'statusLabel'
 	],
 	#category : 'IssueTracker-UI',
 	#package : 'IssueTracker',
@@ -19,17 +20,18 @@ Class {
 
 { #category : 'initialization' }
 IssueToolbarPresenter >> defaultLayout [
-	"Toolbar layout - Save button removed since auto-save handles everything"
-	^ SpBoxLayout newLeftToRight
-		spacing: 5;
-		add: showAllButton;
-		add: showTodayButton;
-		add: showWeekButton;
-		add: hideClosedButton;
-		add: ' ';
-		addLast: chartButton;
-		addLast: ganttButton;
-		yourself
+      ^ SpBoxLayout newLeftToRight
+          spacing: 5;
+          add: showAllButton;
+          add: showTodayButton;
+          add: showWeekButton;
+          add: hideClosedButton;
+          add: ' ';
+          add: statusLabel width: 250;  "Fixed width"
+          addLast: chartButton;
+          addLast: ganttButton;
+          yourself
+
 ]
 
 { #category : 'initialization' }
@@ -89,7 +91,12 @@ IssueToolbarPresenter >> initializePresenters [
 		               action: [
 			               self owner buildPersistenceMenu
 				               openWithSpecAtPointer ];
-		               yourself
+		               yourself.
+
+	statusLabel := self newLabel
+		               label: '';
+		               yourself.
+
 ]
 
 { #category : 'initialization' }
@@ -101,8 +108,10 @@ IssueToolbarPresenter >> onSaveImage [
 
 { #category : 'initialization' }
 IssueToolbarPresenter >> onShowAll [
+
 	dueDateFilter := #all.
 	self updateButtonStates.
+	self updateStatusLabel.
 	self owner filterChanged
 ]
 
@@ -114,25 +123,38 @@ IssueToolbarPresenter >> onShowChart [
 
 { #category : 'initialization' }
 IssueToolbarPresenter >> onShowToday [
-	dueDateFilter := #today.
-	self updateButtonStates.
-	self owner filterChanged
+      dueDateFilter := #today.
+      self updateButtonStates.
+      self updateStatusLabel.
+      self owner filterChanged
+
 ]
 
 { #category : 'initialization' }
 IssueToolbarPresenter >> onShowWeek [
-	dueDateFilter := #week.
-	self updateButtonStates.
-	self owner filterChanged
+      dueDateFilter := #week.
+      self updateButtonStates.
+      self updateStatusLabel.
+      self owner filterChanged
+
 ]
 
 { #category : 'initialization' }
 IssueToolbarPresenter >> onToggleHideClosed [
-	hideClosedIssues := hideClosedIssues not.
-	hideClosedButton label: (hideClosedIssues
-		ifTrue: [ 'Show Closed' ]
-		ifFalse: [ 'Hide Closed' ]).
-	self owner filterChanged
+      hideClosedIssues := hideClosedIssues not.
+      hideClosedButton label: (hideClosedIssues
+          ifTrue: [ 'Show Closed' ]
+          ifFalse: [ 'Hide Closed' ]).
+      self updateStatusLabel.  "NEW"
+      self owner filterChanged
+
+
+]
+
+{ #category : 'initialization' }
+IssueToolbarPresenter >> refreshStatus [
+      self updateStatusLabel
+
 ]
 
 { #category : 'initialization' }
@@ -146,4 +168,23 @@ IssueToolbarPresenter >> updateButtonStates [
 	showWeekButton label: (dueDateFilter = #week 
 		ifTrue: [ '• This Week' ] 
 		ifFalse: [ 'This Week' ])
+]
+
+{ #category : 'initialization' }
+IssueToolbarPresenter >> updateStatusLabel [
+
+	| filteredIssues total endDate text |
+	"Guard against nil owner during initialization"
+	self owner ifNil: [
+		statusLabel label: ''.
+		^ self ].
+
+	filteredIssues := self owner getFilteredIssues.
+	total := filteredIssues
+		         inject: 0
+		         into: [ :sum :issue | sum + issue computedDuration ].
+	endDate := Date today addDays: total.
+	text := 'Total Duration: ' , total asString , ' days | End: '
+	        , endDate yyyymmdd.
+	statusLabel label: text
 ]

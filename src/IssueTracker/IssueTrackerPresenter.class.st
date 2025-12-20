@@ -184,6 +184,7 @@ IssueTrackerPresenter >> initializePresenters [
 		                  action: [ self moveIssueDown ].
 
 	issueList items: issues.
+	toolbar refreshStatus.
 	self updateMoveButtonsState
 ]
 
@@ -198,11 +199,11 @@ IssueTrackerPresenter >> initializeWindow: aWindowPresenter [
 
 { #category : 'initialization' }
 IssueTrackerPresenter >> issueListChanged [
-	"data changed, reload from source - refresh the issue list from the manager"
+      issues := issueManager allIssues.
+      self updateIssueList. 
+      self updateMoveButtonsState.
+      toolbar refreshStatus.  "refresh the status label"
 
-	issues := issueManager allIssues.
-	self updateIssueList.
-	self updateMoveButtonsState
 ]
 
 { #category : 'initialization' }

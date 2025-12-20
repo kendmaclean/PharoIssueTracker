@@ -1,3 +1,10 @@
+"
+For a single developer:
+
+  - Total duration = sum of all issue durations (work is sequential, not parallel)
+  - Dependencies = only affect ordering/precedence
+  - Goal = ""If I start today, when will I finish everything?""
+"
 Class {
 	#name : 'IssueManager',
 	#superclass : 'Object',
@@ -242,6 +249,20 @@ IssueManager >> moveIssueUp: anIssue [
 ]
 
 { #category : 'initialization' }
+IssueManager >> projectedEndDate [
+      "End date if starting today"
+      ^ Date today addDays: self totalDuration
+
+]
+
+{ #category : 'initialization' }
+IssueManager >> projectedEndDateFrom: aStartDate [
+      "End date from a given start date"
+      ^ aStartDate addDays: self totalDuration
+
+]
+
+{ #category : 'initialization' }
 IssueManager >> removeDependency: dependencyIssue from: anIssue [
 	"Remove a dependency from an issue"
 	
@@ -262,6 +283,23 @@ IssueManager >> repository [
 { #category : 'initialization' }
 IssueManager >> repository: anIssueRepository [
 	repository := anIssueRepository
+]
+
+{ #category : 'initialization' }
+IssueManager >> totalDuration [
+      "Sum of all issue durations in days"
+      ^ self allIssues
+          inject: 0
+          into: [ :sum :issue | sum + issue computedDuration ]
+]
+
+{ #category : 'initialization' }
+IssueManager >> totalDurationFor: issueCollection [
+      "Sum of durations for a subset of issues"
+      ^ issueCollection
+          inject: 0
+          into: [ :sum :issue | sum + issue computedDuration ]
+
 ]
 
 { #category : 'initialization' }
