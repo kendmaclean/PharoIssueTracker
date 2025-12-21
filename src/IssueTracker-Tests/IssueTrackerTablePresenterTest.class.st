@@ -11,7 +11,7 @@ This test suite covers:
 
 "
 Class {
-	#name : 'IssueTrackerPresenterTest',
+	#name : 'IssueTrackerTablePresenterTest',
 	#superclass : 'TestCase',
 	#instVars : [
 		'presenter',
@@ -25,46 +25,48 @@ Class {
 }
 
 { #category : 'as yet unclassified' }
-IssueTrackerPresenterTest >> setUp [
-      super setUp.
-      TestIssueRepository resetAll.
-      IssueManager reset.
+IssueTrackerTablePresenterTest >> setUp [
 
-      "Point IssueManager to test repository"
-      IssueManager default repository: TestIssueRepository uniqueInstance.
+	super setUp.
+	TestIssueRepository resetAll.
+	IssueManager reset.
+	
+	IssueManager reset.
+	"Point IssueManager to test repository"
+	IssueManager default repository: TestIssueRepository uniqueInstance.
 
-      "Create test issues"
-      testIssue1 := Issue new
-          title: 'First Issue';
-          status: #open;
-          priority: #high;
-          duration: 5;
-          yourself.
+	"Create test issues"
+	testIssue1 := Issue new
+		              title: 'First Issue';
+		              status: #open;
+		              priority: #high;
+		              duration: 5;
+		              yourself.
 
-      testIssue2 := Issue new
-          title: 'Second Issue';
-          status: #inProgress;
-          priority: #medium;
-          duration: 3;
-          yourself.
+	testIssue2 := Issue new
+		              title: 'Second Issue';
+		              status: #inProgress;
+		              priority: #medium;
+		              duration: 3;
+		              yourself.
 
-      testIssue3 := Issue new
-          title: 'Closed Issue';
-          status: #closed;
-          priority: #low;
-          duration: 2;
-          yourself.
+	testIssue3 := Issue new
+		              title: 'Closed Issue';
+		              status: #closed;
+		              priority: #low;
+		              duration: 2;
+		              yourself.
 
-      "Add via test repository"
-      TestIssueRepository uniqueInstance addIssue: testIssue1.
-      TestIssueRepository uniqueInstance addIssue: testIssue2.
-      TestIssueRepository uniqueInstance addIssue: testIssue3.
+	"Add via test repository"
+	TestIssueRepository uniqueInstance addIssue: testIssue1.
+	TestIssueRepository uniqueInstance addIssue: testIssue2.
+	TestIssueRepository uniqueInstance addIssue: testIssue3.
 
-      presenter := IssueTrackerPresenter new.
+	presenter := IssueTrackerTablePresenter new
 ]
 
 { #category : 'as yet unclassified' }
-IssueTrackerPresenterTest >> tearDown [
+IssueTrackerTablePresenterTest >> tearDown [
       presenter := nil.
       testIssue1 := nil.
       testIssue2 := nil.
@@ -75,7 +77,7 @@ IssueTrackerPresenterTest >> tearDown [
 ]
 
 { #category : 'as yet unclassified' }
-IssueTrackerPresenterTest >> testClearCurrentIssue [
+IssueTrackerTablePresenterTest >> testClearCurrentIssue [
       "Test clearing the current issue"
       presenter onIssueSelected: testIssue1.
       self assert: presenter hasCurrentIssue.
@@ -86,7 +88,7 @@ IssueTrackerPresenterTest >> testClearCurrentIssue [
 ]
 
 { #category : 'as yet unclassified' }
-IssueTrackerPresenterTest >> testCurrentIssueAccessor [
+IssueTrackerTablePresenterTest >> testCurrentIssueAccessor [
       "Test currentIssue getter"
       self assert: presenter currentIssue isNil.
       presenter onIssueSelected: testIssue1.
@@ -94,13 +96,13 @@ IssueTrackerPresenterTest >> testCurrentIssueAccessor [
 ]
 
 { #category : 'as yet unclassified' }
-IssueTrackerPresenterTest >> testFilterChanged [
+IssueTrackerTablePresenterTest >> testFilterChanged [
       "Test that filterChanged does not raise error"
       self shouldnt: [ presenter filterChanged ] raise: Error.
 ]
 
 { #category : 'as yet unclassified' }
-IssueTrackerPresenterTest >> testGetFilteredIssuesExcludesClosed [
+IssueTrackerTablePresenterTest >> testGetFilteredIssuesExcludesClosed [
       "Test that getFilteredIssues excludes closed issues when filter is set"
       | filtered toolbar |
       "Access toolbar via instVar and toggle hide closed"
@@ -112,7 +114,7 @@ IssueTrackerPresenterTest >> testGetFilteredIssuesExcludesClosed [
 ]
 
 { #category : 'as yet unclassified' }
-IssueTrackerPresenterTest >> testGetFilteredIssuesReturnsAll [
+IssueTrackerTablePresenterTest >> testGetFilteredIssuesReturnsAll [
       "Test that getFilteredIssues returns all issues with default filter"
       | filtered |
       filtered := presenter getFilteredIssues.
@@ -120,27 +122,27 @@ IssueTrackerPresenterTest >> testGetFilteredIssuesReturnsAll [
 ]
 
 { #category : 'as yet unclassified' }
-IssueTrackerPresenterTest >> testHasCurrentIssueWhenNil [
+IssueTrackerTablePresenterTest >> testHasCurrentIssueWhenNil [
       "Test hasCurrentIssue returns false when no issue selected"
       self deny: presenter hasCurrentIssue.
 ]
 
 { #category : 'as yet unclassified' }
-IssueTrackerPresenterTest >> testHasCurrentIssueWhenSet [
+IssueTrackerTablePresenterTest >> testHasCurrentIssueWhenSet [
       "Test hasCurrentIssue returns true when issue is selected"
       presenter onIssueSelected: testIssue1.
       self assert: presenter hasCurrentIssue.
 ]
 
 { #category : 'as yet unclassified' }
-IssueTrackerPresenterTest >> testInitialization [
+IssueTrackerTablePresenterTest >> testInitialization [
       "Test that presenter initializes correctly"
       self assert: presenter currentIssue isNil.
       self deny: presenter hasCurrentIssue.
 ]
 
 { #category : 'as yet unclassified' }
-IssueTrackerPresenterTest >> testIssueListChanged [
+IssueTrackerTablePresenterTest >> testIssueListChanged [
       "Test that issueListChanged reloads issues from manager"
       | newIssue |
       newIssue := Issue new
@@ -155,7 +157,7 @@ IssueTrackerPresenterTest >> testIssueListChanged [
 ]
 
 { #category : 'as yet unclassified' }
-IssueTrackerPresenterTest >> testMultipleIssueSelections [
+IssueTrackerTablePresenterTest >> testMultipleIssueSelections [
       "Test switching between issues"
       presenter onIssueSelected: testIssue1.
       self assert: presenter currentIssue title equals: 'First Issue'.
@@ -168,7 +170,7 @@ IssueTrackerPresenterTest >> testMultipleIssueSelections [
 ]
 
 { #category : 'as yet unclassified' }
-IssueTrackerPresenterTest >> testOnIssueSelected [
+IssueTrackerTablePresenterTest >> testOnIssueSelected [
       "Test that selecting an issue updates currentIssue"
       presenter onIssueSelected: testIssue2.
       self assert: presenter currentIssue equals: testIssue2.
@@ -178,7 +180,7 @@ IssueTrackerPresenterTest >> testOnIssueSelected [
 ]
 
 { #category : 'as yet unclassified' }
-IssueTrackerPresenterTest >> testOnIssueSelectedWithNil [
+IssueTrackerTablePresenterTest >> testOnIssueSelectedWithNil [
       "Test that selecting nil clears selection"
       presenter onIssueSelected: testIssue1.
       self assert: presenter hasCurrentIssue.

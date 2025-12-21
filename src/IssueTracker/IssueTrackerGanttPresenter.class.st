@@ -72,7 +72,7 @@ IssueTrackerGanttPresenter >> buildGanttOn: rsCanvas [
 	filteredIssues := self getFilteredIssues.
 	
 	"Create and configure builder"
-	ganttBuilder := GanttChartBuilder new.
+	ganttBuilder := IssueGanttChartBuilder new.
 	ganttBuilder canvas: rsCanvas.
 	ganttBuilder issues: filteredIssues.
 	
@@ -324,7 +324,7 @@ IssueTrackerGanttPresenter >> switchToTableView [
     "Close current window and open table view at same position"
     | tablePresenter currentPosition |
     currentPosition := self window adapter widget position.
-    tablePresenter := IssueTrackerPresenter new.
+    tablePresenter := IssueTrackerTablePresenter new.
     tablePresenter open.
     tablePresenter window adapter widget position: currentPosition.
     self window close

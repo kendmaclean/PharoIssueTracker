@@ -15,7 +15,7 @@
 
 "
 Class {
-	#name : 'GanttChartBuilderTest',
+	#name : 'IssueGanttChartBuilderTest',
 	#superclass : 'TestCase',
 	#instVars : [
 		'builder',
@@ -31,10 +31,10 @@ Class {
 }
 
 { #category : 'running' }
-GanttChartBuilderTest >> setUp [
+IssueGanttChartBuilderTest >> setUp [
       super setUp.
       canvas := RSCanvas new.
-      builder := GanttChartBuilder new.
+      builder := IssueGanttChartBuilder new.
       builder canvas: canvas.
 
       "Create test issues with dates"
@@ -72,7 +72,7 @@ GanttChartBuilderTest >> setUp [
 ]
 
 { #category : 'running' }
-GanttChartBuilderTest >> tearDown [
+IssueGanttChartBuilderTest >> tearDown [
       builder := nil.
       canvas := nil.
       testIssue1 := nil.
@@ -83,7 +83,7 @@ GanttChartBuilderTest >> tearDown [
 ]
 
 { #category : 'tests - grid' }
-GanttChartBuilderTest >> testAddDateAxisAddsLabelsToCanvas [
+IssueGanttChartBuilderTest >> testAddDateAxisAddsLabelsToCanvas [
       "Test that addDateAxisFrom:to:issueCount: adds labels"
       | shapesBefore |
       shapesBefore := canvas shapes size.
@@ -92,7 +92,7 @@ GanttChartBuilderTest >> testAddDateAxisAddsLabelsToCanvas [
 ]
 
 { #category : 'tests - dependencies' }
-GanttChartBuilderTest >> testAddDependencyArrowsNoDependencies [
+IssueGanttChartBuilderTest >> testAddDependencyArrowsNoDependencies [
       "Test that addDependencyArrowsFor:shapeMap: adds no arrows without dependencies"
       | shapeMap shape1 shapesBefore |
       shape1 := RSBox new model: testIssue1.
@@ -105,7 +105,7 @@ GanttChartBuilderTest >> testAddDependencyArrowsNoDependencies [
 ]
 
 { #category : 'tests - dependencies' }
-GanttChartBuilderTest >> testAddDependencyArrowsWithDependencies [
+IssueGanttChartBuilderTest >> testAddDependencyArrowsWithDependencies [
       "Test that addDependencyArrowsFor:shapeMap: adds arrows for dependencies"
       | shapeMap shape1 shape2 shapesBefore |
       testIssue1 addDependency: testIssue3.
@@ -121,7 +121,7 @@ GanttChartBuilderTest >> testAddDependencyArrowsWithDependencies [
 ]
 
 { #category : 'tests - grid' }
-GanttChartBuilderTest >> testAddGridLineAddsLineToCanvas [
+IssueGanttChartBuilderTest >> testAddGridLineAddsLineToCanvas [
       "Test that addGridLineAt:height: adds a line to canvas"
       | shapesBefore |
       shapesBefore := canvas shapes size.
@@ -130,14 +130,14 @@ GanttChartBuilderTest >> testAddGridLineAddsLineToCanvas [
 ]
 
 { #category : 'tests - grid' }
-GanttChartBuilderTest >> testAddGridLineCreatesRSLine [
+IssueGanttChartBuilderTest >> testAddGridLineCreatesRSLine [
       "Test that grid line is an RSLine"
       builder addGridLineAt: 100 height: 200.
       self assert: (canvas shapes last isKindOf: RSLine).
 ]
 
 { #category : 'tests - build' }
-GanttChartBuilderTest >> testBuildAddsShapesToCanvas [
+IssueGanttChartBuilderTest >> testBuildAddsShapesToCanvas [
       "Test that build adds shapes to canvas"
       builder issues: { testIssue1 }.
       builder build.
@@ -145,7 +145,7 @@ GanttChartBuilderTest >> testBuildAddsShapesToCanvas [
 ]
 
 { #category : 'tests - build' }
-GanttChartBuilderTest >> testBuildChartForCreatesShapesForEachIssue [
+IssueGanttChartBuilderTest >> testBuildChartForCreatesShapesForEachIssue [
       "Test that buildChartFor: creates shapes for each issue"
       | issues shapesBeforeCount |
       issues := { testIssue1. testIssue2 }.
@@ -155,7 +155,7 @@ GanttChartBuilderTest >> testBuildChartForCreatesShapesForEachIssue [
 ]
 
 { #category : 'tests - integration' }
-GanttChartBuilderTest >> testBuildWithClickCallbackDoesNotError [
+IssueGanttChartBuilderTest >> testBuildWithClickCallbackDoesNotError [
       "Test that build with click callback works"
       builder issues: { testIssue1 }.
       builder onIssueClick: [ :issue | issue title ].
@@ -163,7 +163,7 @@ GanttChartBuilderTest >> testBuildWithClickCallbackDoesNotError [
 ]
 
 { #category : 'tests - build' }
-GanttChartBuilderTest >> testBuildWithEmptyCollectionShowsEmptyMessage [
+IssueGanttChartBuilderTest >> testBuildWithEmptyCollectionShowsEmptyMessage [
       "Test that build shows empty message when issues collection is empty"
       builder issues: {}.
       builder build.
@@ -173,7 +173,7 @@ GanttChartBuilderTest >> testBuildWithEmptyCollectionShowsEmptyMessage [
 ]
 
 { #category : 'tests - build' }
-GanttChartBuilderTest >> testBuildWithEmptyIssuesShowsEmptyMessage [
+IssueGanttChartBuilderTest >> testBuildWithEmptyIssuesShowsEmptyMessage [
       "Test that build shows empty message when no issues"
       | result |
       builder issues: {}.
@@ -183,7 +183,7 @@ GanttChartBuilderTest >> testBuildWithEmptyIssuesShowsEmptyMessage [
 ]
 
 { #category : 'tests - build' }
-GanttChartBuilderTest >> testBuildWithIssueWithoutExplicitDatesStillDisplays [
+IssueGanttChartBuilderTest >> testBuildWithIssueWithoutExplicitDatesStillDisplays [
 	"Test that issue without explicit dates still displays (uses computed defaults)"
 "
 	| issueWithoutExplicitDates |
@@ -200,7 +200,7 @@ GanttChartBuilderTest >> testBuildWithIssueWithoutExplicitDatesStillDisplays [
 ]
 
 { #category : 'tests - build' }
-GanttChartBuilderTest >> testBuildWithIssuesReturnsCanvas [
+IssueGanttChartBuilderTest >> testBuildWithIssuesReturnsCanvas [
       "Test that build returns the canvas when issues have dates"
       | result |
       builder issues: { testIssue1. testIssue2 }.
@@ -209,14 +209,14 @@ GanttChartBuilderTest >> testBuildWithIssuesReturnsCanvas [
 ]
 
 { #category : 'tests - build' }
-GanttChartBuilderTest >> testBuildWithMultipleIssues [
+IssueGanttChartBuilderTest >> testBuildWithMultipleIssues [
       "Test that build handles multiple issues"
       builder issues: { testIssue1. testIssue2. testIssue3 }.
       self shouldnt: [ builder build ] raise: Error.
 ]
 
 { #category : 'tests - integration' }
-GanttChartBuilderTest >> testBuildWithRightClickCallbackDoesNotError [
+IssueGanttChartBuilderTest >> testBuildWithRightClickCallbackDoesNotError [
       "Test that build with right-click callback works"
       builder issues: { testIssue1 }.
       builder onIssueRightClick: [ :issue :evt | issue title ].
@@ -224,7 +224,7 @@ GanttChartBuilderTest >> testBuildWithRightClickCallbackDoesNotError [
 ]
 
 { #category : 'tests - initialization' }
-GanttChartBuilderTest >> testCanvasSetter [
+IssueGanttChartBuilderTest >> testCanvasSetter [
       "Test canvas: setter"
       | newCanvas |
       newCanvas := RSCanvas new.
@@ -233,49 +233,49 @@ GanttChartBuilderTest >> testCanvasSetter [
 ]
 
 { #category : 'tests - colors' }
-GanttChartBuilderTest >> testColorForStatusBlocked [
+IssueGanttChartBuilderTest >> testColorForStatusBlocked [
       "Test colorForStatus returns red for blocked"
       self assert: (builder colorForStatus: #blocked) equals: Color red.
 ]
 
 { #category : 'tests - colors' }
-GanttChartBuilderTest >> testColorForStatusClosed [
+IssueGanttChartBuilderTest >> testColorForStatusClosed [
       "Test colorForStatus returns gray for closed"
       self assert: (builder colorForStatus: #closed) equals: Color gray.
 ]
 
 { #category : 'tests - colors' }
-GanttChartBuilderTest >> testColorForStatusInProgress [
+IssueGanttChartBuilderTest >> testColorForStatusInProgress [
       "Test colorForStatus returns orange for inProgress"
       self assert: (builder colorForStatus: #inProgress) equals: Color orange.
 ]
 
 { #category : 'tests - colors' }
-GanttChartBuilderTest >> testColorForStatusMilestone [
+IssueGanttChartBuilderTest >> testColorForStatusMilestone [
       "Test colorForStatus returns yellow for milestone"
       self assert: (builder colorForStatus: #milestone) equals: Color yellow.
 ]
 
 { #category : 'tests - colors' }
-GanttChartBuilderTest >> testColorForStatusOpen [
+IssueGanttChartBuilderTest >> testColorForStatusOpen [
       "Test colorForStatus returns cyan for open"
       self assert: (builder colorForStatus: #open) equals: Color cyan.
 ]
 
 { #category : 'tests - colors' }
-GanttChartBuilderTest >> testColorForStatusResolved [
+IssueGanttChartBuilderTest >> testColorForStatusResolved [
       "Test colorForStatus returns green for resolved"
       self assert: (builder colorForStatus: #resolved) equals: Color green.
 ]
 
 { #category : 'tests - colors' }
-GanttChartBuilderTest >> testColorForStatusUnknown [
+IssueGanttChartBuilderTest >> testColorForStatusUnknown [
       "Test colorForStatus returns lightGray for unknown status"
       self assert: (builder colorForStatus: #unknownStatus) equals: Color lightGray.
 ]
 
 { #category : 'tests - dependencies' }
-GanttChartBuilderTest >> testCreateArrowCreatesRSArrowedLine [
+IssueGanttChartBuilderTest >> testCreateArrowCreatesRSArrowedLine [
 	"Test that arrow is an RSArrowedLine"
 
 	| shape1 shape2 |
@@ -289,7 +289,7 @@ GanttChartBuilderTest >> testCreateArrowCreatesRSArrowedLine [
 ]
 
 { #category : 'tests - dependencies' }
-GanttChartBuilderTest >> testCreateArrowFromToAddsArrowToCanvas [
+IssueGanttChartBuilderTest >> testCreateArrowFromToAddsArrowToCanvas [
       "Test that createArrowFrom:to: adds an arrow to canvas"
       | shape1 shape2 shapesBefore |
       shape1 := RSBox new.
@@ -301,7 +301,7 @@ GanttChartBuilderTest >> testCreateArrowFromToAddsArrowToCanvas [
 ]
 
 { #category : 'tests - shapes' }
-GanttChartBuilderTest >> testCreateBarShapeDelayedHasBorder [
+IssueGanttChartBuilderTest >> testCreateBarShapeDelayedHasBorder [
       "Test that delayed bar shape has red border"
       | shape |
       shape := builder createBarShape: testIssue1 width: 100 hasDelayDue: true.
@@ -310,7 +310,7 @@ GanttChartBuilderTest >> testCreateBarShapeDelayedHasBorder [
 ]
 
 { #category : 'tests - shapes' }
-GanttChartBuilderTest >> testCreateBarShapeHasCorrectHeight [
+IssueGanttChartBuilderTest >> testCreateBarShapeHasCorrectHeight [
       "Test that bar shape has height of 25"
       | shape |
       shape := builder createBarShape: testIssue1 width: 100 hasDelayDue: false.
@@ -318,7 +318,7 @@ GanttChartBuilderTest >> testCreateBarShapeHasCorrectHeight [
 ]
 
 { #category : 'tests - shapes' }
-GanttChartBuilderTest >> testCreateBarShapeHasCorrectWidth [
+IssueGanttChartBuilderTest >> testCreateBarShapeHasCorrectWidth [
       "Test that bar shape has correct width"
       | shape |
       shape := builder createBarShape: testIssue1 width: 100 hasDelayDue: false.
@@ -326,7 +326,7 @@ GanttChartBuilderTest >> testCreateBarShapeHasCorrectWidth [
 ]
 
 { #category : 'tests - shapes' }
-GanttChartBuilderTest >> testCreateBarShapeHasIssueAsModel [
+IssueGanttChartBuilderTest >> testCreateBarShapeHasIssueAsModel [
       "Test that bar shape has issue as model"
       | shape |
       shape := builder createBarShape: testIssue1 width: 100 hasDelayDue: false.
@@ -334,7 +334,7 @@ GanttChartBuilderTest >> testCreateBarShapeHasIssueAsModel [
 ]
 
 { #category : 'tests - shapes' }
-GanttChartBuilderTest >> testCreateBarShapeNotDelayedNoBorder [
+IssueGanttChartBuilderTest >> testCreateBarShapeNotDelayedNoBorder [
       "Test that non-delayed bar shape has no border"
       | shape |
       shape := builder createBarShape: testIssue1 width: 100 hasDelayDue: false.
@@ -342,7 +342,7 @@ GanttChartBuilderTest >> testCreateBarShapeNotDelayedNoBorder [
 ]
 
 { #category : 'tests - shapes' }
-GanttChartBuilderTest >> testCreateBarShapeReturnsRSBox [
+IssueGanttChartBuilderTest >> testCreateBarShapeReturnsRSBox [
       "Test that createBarShape:width:hasDelayDue: returns an RSBox"
       | shape |
       shape := builder createBarShape: testIssue1 width: 100 hasDelayDue: false.
@@ -350,7 +350,7 @@ GanttChartBuilderTest >> testCreateBarShapeReturnsRSBox [
 ]
 
 { #category : 'tests - shapes' }
-GanttChartBuilderTest >> testCreateCompositeForHasTwoShapes [
+IssueGanttChartBuilderTest >> testCreateCompositeForHasTwoShapes [
       "Test that composite has two shapes (bar/diamond + label)"
       | composite |
       composite := builder createCompositeFor: testIssue1 at: 1 baseline: Date today.
@@ -358,7 +358,7 @@ GanttChartBuilderTest >> testCreateCompositeForHasTwoShapes [
 ]
 
 { #category : 'tests - shapes' }
-GanttChartBuilderTest >> testCreateCompositeForMilestone [
+IssueGanttChartBuilderTest >> testCreateCompositeForMilestone [
       "Test that composite for milestone has polygon shape"
       | composite firstShape |
       composite := builder createCompositeFor: milestoneIssue at: 1 baseline: Date today.
@@ -367,7 +367,7 @@ GanttChartBuilderTest >> testCreateCompositeForMilestone [
 ]
 
 { #category : 'tests - shapes' }
-GanttChartBuilderTest >> testCreateCompositeForRegularIssue [
+IssueGanttChartBuilderTest >> testCreateCompositeForRegularIssue [
       "Test that composite for regular issue has box shape"
       | composite firstShape |
       composite := builder createCompositeFor: testIssue1 at: 1 baseline: Date today.
@@ -376,7 +376,7 @@ GanttChartBuilderTest >> testCreateCompositeForRegularIssue [
 ]
 
 { #category : 'tests - shapes' }
-GanttChartBuilderTest >> testCreateCompositeForReturnsRSComposite [
+IssueGanttChartBuilderTest >> testCreateCompositeForReturnsRSComposite [
       "Test that createCompositeFor:at:baseline: returns an RSComposite"
       | composite |
       composite := builder createCompositeFor: testIssue1 at: 1 baseline: Date today.
@@ -384,7 +384,7 @@ GanttChartBuilderTest >> testCreateCompositeForReturnsRSComposite [
 ]
 
 { #category : 'tests - labels' }
-GanttChartBuilderTest >> testCreateLabelContainsIssueTitle [
+IssueGanttChartBuilderTest >> testCreateLabelContainsIssueTitle [
       "Test that label contains issue title"
       | label |
       label := builder createLabelFor: testIssue1 isMilestone: false hasDelayDue: false width: 100.
@@ -392,7 +392,7 @@ GanttChartBuilderTest >> testCreateLabelContainsIssueTitle [
 ]
 
 { #category : 'tests - labels' }
-GanttChartBuilderTest >> testCreateLabelForDelayedIssue [
+IssueGanttChartBuilderTest >> testCreateLabelForDelayedIssue [
       "Test that delayed issue label contains (delayed)"
       | label |
       label := builder createLabelFor: testIssue1 isMilestone: false hasDelayDue: true width: 100.
@@ -400,7 +400,7 @@ GanttChartBuilderTest >> testCreateLabelForDelayedIssue [
 ]
 
 { #category : 'tests - labels' }
-GanttChartBuilderTest >> testCreateLabelForDelayedMilestone [
+IssueGanttChartBuilderTest >> testCreateLabelForDelayedMilestone [
       "Test that delayed milestone label contains both diamond and delayed"
       | label |
       label := builder createLabelFor: milestoneIssue isMilestone: true hasDelayDue: true width: 100.
@@ -409,7 +409,7 @@ GanttChartBuilderTest >> testCreateLabelForDelayedMilestone [
 ]
 
 { #category : 'tests - labels' }
-GanttChartBuilderTest >> testCreateLabelForMilestone [
+IssueGanttChartBuilderTest >> testCreateLabelForMilestone [
       "Test that milestone label contains diamond symbol"
       | label |
       label := builder createLabelFor: milestoneIssue isMilestone: true hasDelayDue: false width: 100.
@@ -417,7 +417,7 @@ GanttChartBuilderTest >> testCreateLabelForMilestone [
 ]
 
 { #category : 'tests - labels' }
-GanttChartBuilderTest >> testCreateLabelReturnsRSLabel [
+IssueGanttChartBuilderTest >> testCreateLabelReturnsRSLabel [
       "Test that createLabelFor:isMilestone:hasDelayDue:width: returns RSLabel"
       | label |
       label := builder createLabelFor: testIssue1 isMilestone: false hasDelayDue: false width: 100.
@@ -425,7 +425,7 @@ GanttChartBuilderTest >> testCreateLabelReturnsRSLabel [
 ]
 
 { #category : 'tests - shapes' }
-GanttChartBuilderTest >> testCreateMilestoneShapeDelayedHasRedBorder [
+IssueGanttChartBuilderTest >> testCreateMilestoneShapeDelayedHasRedBorder [
       "Test that delayed milestone has red border"
       | shape |
       shape := builder createMilestoneShape: milestoneIssue hasDelayDue: true.
@@ -433,7 +433,7 @@ GanttChartBuilderTest >> testCreateMilestoneShapeDelayedHasRedBorder [
 ]
 
 { #category : 'tests - shapes' }
-GanttChartBuilderTest >> testCreateMilestoneShapeHasIssueAsModel [
+IssueGanttChartBuilderTest >> testCreateMilestoneShapeHasIssueAsModel [
       "Test that milestone shape has issue as model"
       | shape |
       shape := builder createMilestoneShape: milestoneIssue hasDelayDue: false.
@@ -441,7 +441,7 @@ GanttChartBuilderTest >> testCreateMilestoneShapeHasIssueAsModel [
 ]
 
 { #category : 'tests - shapes' }
-GanttChartBuilderTest >> testCreateMilestoneShapeHasYellowColor [
+IssueGanttChartBuilderTest >> testCreateMilestoneShapeHasYellowColor [
       "Test that milestone shape is yellow"
       | shape |
       shape := builder createMilestoneShape: milestoneIssue hasDelayDue: false.
@@ -449,7 +449,7 @@ GanttChartBuilderTest >> testCreateMilestoneShapeHasYellowColor [
 ]
 
 { #category : 'tests - shapes' }
-GanttChartBuilderTest >> testCreateMilestoneShapeNotDelayedHasBlackBorder [
+IssueGanttChartBuilderTest >> testCreateMilestoneShapeNotDelayedHasBlackBorder [
       "Test that non-delayed milestone has black border"
       | shape |
       shape := builder createMilestoneShape: milestoneIssue hasDelayDue: false.
@@ -457,7 +457,7 @@ GanttChartBuilderTest >> testCreateMilestoneShapeNotDelayedHasBlackBorder [
 ]
 
 { #category : 'tests - shapes' }
-GanttChartBuilderTest >> testCreateMilestoneShapeReturnsRSPolygon [
+IssueGanttChartBuilderTest >> testCreateMilestoneShapeReturnsRSPolygon [
       "Test that createMilestoneShape:hasDelayDue: returns an RSPolygon"
       | shape |
       shape := builder createMilestoneShape: milestoneIssue hasDelayDue: false.
@@ -465,7 +465,7 @@ GanttChartBuilderTest >> testCreateMilestoneShapeReturnsRSPolygon [
 ]
 
 { #category : 'tests - tooltips' }
-GanttChartBuilderTest >> testCreateTooltipContainsPriority [
+IssueGanttChartBuilderTest >> testCreateTooltipContainsPriority [
       "Test that tooltip contains priority"
       | tooltip |
       tooltip := builder createTooltipFor: testIssue1 isMilestone: false hasDelayDue: false originalStart: nil.
@@ -474,7 +474,7 @@ GanttChartBuilderTest >> testCreateTooltipContainsPriority [
 ]
 
 { #category : 'tests - tooltips' }
-GanttChartBuilderTest >> testCreateTooltipContainsStatus [
+IssueGanttChartBuilderTest >> testCreateTooltipContainsStatus [
       "Test that tooltip contains status"
       | tooltip |
       tooltip := builder createTooltipFor: testIssue1 isMilestone: false hasDelayDue: false originalStart: nil.
@@ -483,7 +483,7 @@ GanttChartBuilderTest >> testCreateTooltipContainsStatus [
 ]
 
 { #category : 'tests - tooltips' }
-GanttChartBuilderTest >> testCreateTooltipContainsTitle [
+IssueGanttChartBuilderTest >> testCreateTooltipContainsTitle [
       "Test that tooltip contains issue title"
       | tooltip |
       tooltip := builder createTooltipFor: testIssue1 isMilestone: false hasDelayDue: false originalStart: nil.
@@ -491,7 +491,7 @@ GanttChartBuilderTest >> testCreateTooltipContainsTitle [
 ]
 
 { #category : 'tests - tooltips' }
-GanttChartBuilderTest >> testCreateTooltipForDelayedIssue [
+IssueGanttChartBuilderTest >> testCreateTooltipForDelayedIssue [
       "Test that delayed issue tooltip contains warning"
       | tooltip |
       tooltip := builder createTooltipFor: testIssue1 isMilestone: false hasDelayDue: true originalStart: nil.
@@ -499,7 +499,7 @@ GanttChartBuilderTest >> testCreateTooltipForDelayedIssue [
 ]
 
 { #category : 'tests - tooltips' }
-GanttChartBuilderTest >> testCreateTooltipForMilestoneContainsType [
+IssueGanttChartBuilderTest >> testCreateTooltipForMilestoneContainsType [
       "Test that milestone tooltip contains Type: Milestone"
       | tooltip |
       tooltip := builder createTooltipFor: milestoneIssue isMilestone: true hasDelayDue: false originalStart: nil.
@@ -507,7 +507,7 @@ GanttChartBuilderTest >> testCreateTooltipForMilestoneContainsType [
 ]
 
 { #category : 'tests - tooltips' }
-GanttChartBuilderTest >> testCreateTooltipWithDependencies [
+IssueGanttChartBuilderTest >> testCreateTooltipWithDependencies [
       "Test that tooltip shows dependencies count"
       | tooltip |
       testIssue1 addDependency: testIssue3.
@@ -516,7 +516,7 @@ GanttChartBuilderTest >> testCreateTooltipWithDependencies [
 ]
 
 { #category : 'tests - tooltips' }
-GanttChartBuilderTest >> testCreateTooltipWithOriginalStart [
+IssueGanttChartBuilderTest >> testCreateTooltipWithOriginalStart [
       "Test that tooltip with original start shows it"
       | tooltip originalDate |
       originalDate := Date today subtractDays: 2.
@@ -525,7 +525,7 @@ GanttChartBuilderTest >> testCreateTooltipWithOriginalStart [
 ]
 
 { #category : 'tests - integration' }
-GanttChartBuilderTest >> testFullBuildWithDependencies [
+IssueGanttChartBuilderTest >> testFullBuildWithDependencies [
       "Test full build with issues that have dependencies"
       testIssue1 addDependency: testIssue3.
       builder issues: { testIssue1. testIssue3 }.
@@ -533,7 +533,7 @@ GanttChartBuilderTest >> testFullBuildWithDependencies [
 ]
 
 { #category : 'tests - integration' }
-GanttChartBuilderTest >> testFullBuildWithMixedIssues [
+IssueGanttChartBuilderTest >> testFullBuildWithMixedIssues [
       "Test full build with regular issues and milestones"
       builder issues: { testIssue1. testIssue2. milestoneIssue }.
       self shouldnt: [ builder build ] raise: Error.
@@ -541,15 +541,15 @@ GanttChartBuilderTest >> testFullBuildWithMixedIssues [
 ]
 
 { #category : 'tests - initialization' }
-GanttChartBuilderTest >> testInitializeSetsDefaultLeftMargin [
+IssueGanttChartBuilderTest >> testInitializeSetsDefaultLeftMargin [
       "Test that initialize sets leftMargin to 150"
       | newBuilder |
-      newBuilder := GanttChartBuilder new.
+      newBuilder := IssueGanttChartBuilder new.
       self assert: (newBuilder instVarNamed: 'leftMargin') equals: 150.
 ]
 
 { #category : 'tests - initialization' }
-GanttChartBuilderTest >> testIssuesSetter [
+IssueGanttChartBuilderTest >> testIssuesSetter [
       "Test issues: setter"
       | issues |
       issues := { testIssue1. testIssue2 }.
@@ -558,14 +558,14 @@ GanttChartBuilderTest >> testIssuesSetter [
 ]
 
 { #category : 'tests - initialization' }
-GanttChartBuilderTest >> testLeftMarginSetter [
+IssueGanttChartBuilderTest >> testLeftMarginSetter [
       "Test leftMargin: setter"
       builder leftMargin: 200.
       self assert: (builder instVarNamed: 'leftMargin') equals: 200.
 ]
 
 { #category : 'tests - callbacks' }
-GanttChartBuilderTest >> testOnIssueClickSetsCallback [
+IssueGanttChartBuilderTest >> testOnIssueClickSetsCallback [
       "Test that onIssueClick: sets the callback"
       | callback |
       callback := [ :issue | issue title ].
@@ -574,13 +574,13 @@ GanttChartBuilderTest >> testOnIssueClickSetsCallback [
 ]
 
 { #category : 'tests - callbacks' }
-GanttChartBuilderTest >> testOnIssueClickedDoesNothingWithoutCallback [
+IssueGanttChartBuilderTest >> testOnIssueClickedDoesNothingWithoutCallback [
       "Test that onIssueClicked:with: does nothing when no callback is set"
       self shouldnt: [ builder onIssueClicked: testIssue1 with: nil ] raise: Error.
 ]
 
 { #category : 'tests - callbacks' }
-GanttChartBuilderTest >> testOnIssueClickedInvokesCallback [
+IssueGanttChartBuilderTest >> testOnIssueClickedInvokesCallback [
       "Test that onIssueClicked:with: invokes the callback"
       | clickedIssue |
       clickedIssue := nil.
@@ -590,7 +590,7 @@ GanttChartBuilderTest >> testOnIssueClickedInvokesCallback [
 ]
 
 { #category : 'tests - callbacks' }
-GanttChartBuilderTest >> testOnIssueRightClickSetsCallback [
+IssueGanttChartBuilderTest >> testOnIssueRightClickSetsCallback [
       "Test that onIssueRightClick: sets the callback"
       | callback |
       callback := [ :issue :evt | issue title ].
@@ -599,7 +599,7 @@ GanttChartBuilderTest >> testOnIssueRightClickSetsCallback [
 ]
 
 { #category : 'tests - callbacks' }
-GanttChartBuilderTest >> testOnIssueRightClickedInvokesCallback [
+IssueGanttChartBuilderTest >> testOnIssueRightClickedInvokesCallback [
       "Test that onIssueRightClicked:with: invokes the callback"
       | clickedIssue clickedEvt |
       clickedIssue := nil.
@@ -613,7 +613,7 @@ GanttChartBuilderTest >> testOnIssueRightClickedInvokesCallback [
 ]
 
 { #category : 'tests - empty' }
-GanttChartBuilderTest >> testShowEmptyMessageAddsLabelToCanvas [
+IssueGanttChartBuilderTest >> testShowEmptyMessageAddsLabelToCanvas [
       "Test that showEmptyMessage adds a label to canvas"
       builder showEmptyMessage.
       self assert: canvas shapes isNotEmpty.
@@ -621,7 +621,7 @@ GanttChartBuilderTest >> testShowEmptyMessageAddsLabelToCanvas [
 ]
 
 { #category : 'tests - empty' }
-GanttChartBuilderTest >> testShowEmptyMessageLabelText [
+IssueGanttChartBuilderTest >> testShowEmptyMessageLabelText [
       "Test that empty message label has correct text"
       builder showEmptyMessage.
       self assert: (canvas shapes first text includesSubstring: 'No issues').

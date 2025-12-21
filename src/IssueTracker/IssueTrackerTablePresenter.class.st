@@ -6,7 +6,7 @@ When you use self instantiate: IssueToolbarPresenter (or any sub-presenter), Spe
 ""self owner"" refers to the parent presenter
 "
 Class {
-	#name : 'IssueTrackerPresenter',
+	#name : 'IssueTrackerTablePresenter',
 	#superclass : 'SpPresenter',
 	#traits : 'TPersistenceMenuTrait',
 	#classTraits : 'TPersistenceMenuTrait classTrait',
@@ -28,24 +28,24 @@ Class {
 }
 
 { #category : 'instance creation' }
-IssueTrackerPresenter class >> open [
+IssueTrackerTablePresenter class >> open [
 	<script>
 	^ self new open
 ]
 
 { #category : 'initialization' }
-IssueTrackerPresenter >> clearCurrentIssue [
+IssueTrackerTablePresenter >> clearCurrentIssue [
 	"Clear the current issue selection"
 	currentIssue := nil
 ]
 
 { #category : 'initialization' }
-IssueTrackerPresenter >> currentIssue [
+IssueTrackerTablePresenter >> currentIssue [
     ^ currentIssue
 ]
 
 { #category : 'initialization' }
-IssueTrackerPresenter >> defaultLayout [
+IssueTrackerTablePresenter >> defaultLayout [
 
 	^ SpBoxLayout newTopToBottom
 		  spacing: 5;
@@ -74,7 +74,7 @@ IssueTrackerPresenter >> defaultLayout [
 ]
 
 { #category : 'initialization' }
-IssueTrackerPresenter >> deleteCurrentIssue [
+IssueTrackerTablePresenter >> deleteCurrentIssue [
     "Delete the currently selected issue"
     
     currentIssue ifNil: [ ^ self ].
@@ -87,7 +87,7 @@ IssueTrackerPresenter >> deleteCurrentIssue [
 ]
 
 { #category : 'initialization' }
-IssueTrackerPresenter >> deleteIssue: anIssue [
+IssueTrackerTablePresenter >> deleteIssue: anIssue [
     "Delete the given issue after confirmation"
     | confirm |
     confirm := UIManager default 
@@ -102,14 +102,14 @@ IssueTrackerPresenter >> deleteIssue: anIssue [
 ]
 
 { #category : 'initialization' }
-IssueTrackerPresenter >> deleteSelectedIssue [
+IssueTrackerTablePresenter >> deleteSelectedIssue [
 	"Override to add auto-save after deleting issue"
 	super deleteSelectedIssue.
 	IssueRepository uniqueInstance autoSave
 ]
 
 { #category : 'initialization' }
-IssueTrackerPresenter >> fieldChanged [
+IssueTrackerTablePresenter >> fieldChanged [
     "Update the currently selected issue when fields change"
     currentIssue ifNotNil: [ :issue |
         issueManager updateIssue: issue with: (Dictionary new
@@ -132,14 +132,14 @@ IssueTrackerPresenter >> fieldChanged [
 ]
 
 { #category : 'initialization' }
-IssueTrackerPresenter >> filterChanged [
+IssueTrackerTablePresenter >> filterChanged [
 	"Same data, filters changed - reapply filters to the current issue list"
 
 	self updateIssueList
 ]
 
 { #category : 'initialization' }
-IssueTrackerPresenter >> getFilteredIssues [
+IssueTrackerTablePresenter >> getFilteredIssues [
 	"Get issues filtered by current toolbar settings"
 	| filter |
 	
@@ -148,12 +148,12 @@ IssueTrackerPresenter >> getFilteredIssues [
 ]
 
 { #category : 'initialization' }
-IssueTrackerPresenter >> hasCurrentIssue [
+IssueTrackerTablePresenter >> hasCurrentIssue [
 	^ currentIssue notNil
 ]
 
 { #category : 'initialization' }
-IssueTrackerPresenter >> initializePresenters [
+IssueTrackerTablePresenter >> initializePresenters [
 
 	issueManager := IssueManager default.
 	issues := issueManager allIssues.
@@ -189,7 +189,7 @@ IssueTrackerPresenter >> initializePresenters [
 ]
 
 { #category : 'initialization' }
-IssueTrackerPresenter >> initializeWindow: aWindowPresenter [
+IssueTrackerTablePresenter >> initializeWindow: aWindowPresenter [
 
 	aWindowPresenter
 		title: 'Issue Tracker';
@@ -198,7 +198,7 @@ IssueTrackerPresenter >> initializeWindow: aWindowPresenter [
 ]
 
 { #category : 'initialization' }
-IssueTrackerPresenter >> issueListChanged [
+IssueTrackerTablePresenter >> issueListChanged [
       issues := issueManager allIssues.
       self updateIssueList. 
       self updateMoveButtonsState.
@@ -207,7 +207,7 @@ IssueTrackerPresenter >> issueListChanged [
 ]
 
 { #category : 'initialization' }
-IssueTrackerPresenter >> moveIssueDown [
+IssueTrackerTablePresenter >> moveIssueDown [
 
 	| repository currentIndex itemToMove allIssues |
 	currentIssue ifNil: [ ^ self ].
@@ -232,7 +232,7 @@ IssueTrackerPresenter >> moveIssueDown [
 ]
 
 { #category : 'initialization' }
-IssueTrackerPresenter >> moveIssueUp [
+IssueTrackerTablePresenter >> moveIssueUp [
 
 	| repository currentIndex itemToMove allIssues |
 	currentIssue ifNil: [ ^ self ].
@@ -257,7 +257,7 @@ IssueTrackerPresenter >> moveIssueUp [
 ]
 
 { #category : 'initialization' }
-IssueTrackerPresenter >> onIssueSelected: anIssue [
+IssueTrackerTablePresenter >> onIssueSelected: anIssue [
 
 	currentIssue := anIssue.
 	detailsForm loadIssue: anIssue.
@@ -265,7 +265,7 @@ IssueTrackerPresenter >> onIssueSelected: anIssue [
 ]
 
 { #category : 'initialization' }
-IssueTrackerPresenter >> openDependencyDialogFor: anIssue [
+IssueTrackerTablePresenter >> openDependencyDialogFor: anIssue [
     "Open the dependency dialog for the given issue"
     IssueDependencyDialog openFor: anIssue.
     "Refresh after dialog closes"
@@ -273,7 +273,7 @@ IssueTrackerPresenter >> openDependencyDialogFor: anIssue [
 ]
 
 { #category : 'initialization' }
-IssueTrackerPresenter >> switchToGanttView [
+IssueTrackerTablePresenter >> switchToGanttView [
     "Close current window and open Gantt view at same position"
     | ganttPresenter currentPosition |
     currentPosition := self window adapter widget position.
@@ -284,14 +284,14 @@ IssueTrackerPresenter >> switchToGanttView [
 ]
 
 { #category : 'initialization' }
-IssueTrackerPresenter >> updateIssueList [
+IssueTrackerTablePresenter >> updateIssueList [
 	"UPdate the UI - ipdate the displayed issue list with current filters"
 
 	issueList items: self getFilteredIssues
 ]
 
 { #category : 'initialization' }
-IssueTrackerPresenter >> updateMoveButtonsState [
+IssueTrackerTablePresenter >> updateMoveButtonsState [
     "Enable/disable move buttons based on selection position"
     
     currentIssue ifNil: [

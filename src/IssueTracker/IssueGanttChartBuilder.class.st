@@ -1,5 +1,5 @@
 Class {
-	#name : 'GanttChartBuilder',
+	#name : 'IssueGanttChartBuilder',
 	#superclass : 'Object',
 	#traits : 'TIssueTrackerTrait',
 	#classTraits : 'TIssueTrackerTrait classTrait',
@@ -16,7 +16,7 @@ Class {
 }
 
 { #category : 'initialization' }
-GanttChartBuilder >> addDateAxisFrom: baselineDate to: maxDate issueCount: issueCount [
+IssueGanttChartBuilder >> addDateAxisFrom: baselineDate to: maxDate issueCount: issueCount [
 	"Add date axis at the top of the chart"
 
 	| daySpan interval currentDate xPosition finalLabel finalDays |
@@ -58,7 +58,7 @@ GanttChartBuilder >> addDateAxisFrom: baselineDate to: maxDate issueCount: issue
 ]
 
 { #category : 'initialization' }
-GanttChartBuilder >> addDependencyArrowsFor: filteredIssues shapeMap: issueShapeMap [
+IssueGanttChartBuilder >> addDependencyArrowsFor: filteredIssues shapeMap: issueShapeMap [
 	"Add dependency arrows between issues"
 	
 	filteredIssues do: [ :issue |
@@ -72,7 +72,7 @@ GanttChartBuilder >> addDependencyArrowsFor: filteredIssues shapeMap: issueShape
 ]
 
 { #category : 'initialization' }
-GanttChartBuilder >> addGridLineAt: xPosition height: height [
+IssueGanttChartBuilder >> addGridLineAt: xPosition height: height [
 	"Add a vertical grid line at the specified x position"
 	| line |
 	
@@ -88,7 +88,7 @@ GanttChartBuilder >> addGridLineAt: xPosition height: height [
 ]
 
 { #category : 'initialization' }
-GanttChartBuilder >> addInteractionsTo: shape for: issue isMilestone: isMilestone hasDelayDue: hasDelayDue originalStart: originalStart [
+IssueGanttChartBuilder >> addInteractionsTo: shape for: issue isMilestone: isMilestone hasDelayDue: hasDelayDue originalStart: originalStart [
 	"Add all interactions (click, right-click, tooltip) to a shape"
 	
 	"Add click handler - must be set by the presenter"
@@ -109,7 +109,7 @@ GanttChartBuilder >> addInteractionsTo: shape for: issue isMilestone: isMileston
 ]
 
 { #category : 'initialization' }
-GanttChartBuilder >> build [
+IssueGanttChartBuilder >> build [
 	"Main entry point to build the Gantt chart"
 	| filteredIssues |
 	
@@ -124,7 +124,7 @@ GanttChartBuilder >> build [
 ]
 
 { #category : 'initialization' }
-GanttChartBuilder >> buildChartFor: filteredIssues [
+IssueGanttChartBuilder >> buildChartFor: filteredIssues [
 	"Build the complete Gantt chart for the given issues"
 	| shapes issueShapeMap baselineDate maxDate |
 	
@@ -159,12 +159,12 @@ GanttChartBuilder >> buildChartFor: filteredIssues [
 ]
 
 { #category : 'initialization' }
-GanttChartBuilder >> canvas: aCanvas [
+IssueGanttChartBuilder >> canvas: aCanvas [
 	canvas := aCanvas
 ]
 
 { #category : 'initialization' }
-GanttChartBuilder >> createArrowFrom: fromShape to: toShape [
+IssueGanttChartBuilder >> createArrowFrom: fromShape to: toShape [
 	"Create an arrow line from one shape to another"
 	| line |
 	
@@ -181,7 +181,7 @@ GanttChartBuilder >> createArrowFrom: fromShape to: toShape [
 ]
 
 { #category : 'initialization' }
-GanttChartBuilder >> createBarShape: issue width: width hasDelayDue: hasDelayDue [
+IssueGanttChartBuilder >> createBarShape: issue width: width hasDelayDue: hasDelayDue [
 	"Create a bar shape for a regular issue"
 	| shape |
 	
@@ -205,7 +205,7 @@ GanttChartBuilder >> createBarShape: issue width: width hasDelayDue: hasDelayDue
 ]
 
 { #category : 'initialization' }
-GanttChartBuilder >> createCompositeFor: issue at: index baseline: baselineDate [
+IssueGanttChartBuilder >> createCompositeFor: issue at: index baseline: baselineDate [
 	"Create a composite shape (bar/diamond + label) for a single issue"
 	| shape label composite startDays endDays startX width hasDelayDue originalStart isMilestone |
 	
@@ -247,7 +247,7 @@ GanttChartBuilder >> createCompositeFor: issue at: index baseline: baselineDate 
 ]
 
 { #category : 'initialization' }
-GanttChartBuilder >> createLabelFor: issue isMilestone: isMilestone hasDelayDue: hasDelayDue width: width [
+IssueGanttChartBuilder >> createLabelFor: issue isMilestone: isMilestone hasDelayDue: hasDelayDue width: width [
 	"Create a label for an issue"
 	| label |
 	
@@ -270,7 +270,7 @@ GanttChartBuilder >> createLabelFor: issue isMilestone: isMilestone hasDelayDue:
 ]
 
 { #category : 'initialization' }
-GanttChartBuilder >> createMilestoneShape: issue hasDelayDue: hasDelayDue [
+IssueGanttChartBuilder >> createMilestoneShape: issue hasDelayDue: hasDelayDue [
 	"Create a diamond shape for a milestone"
 	
 	^ RSPolygon new
@@ -284,7 +284,7 @@ GanttChartBuilder >> createMilestoneShape: issue hasDelayDue: hasDelayDue [
 ]
 
 { #category : 'initialization' }
-GanttChartBuilder >> createShapes: shapes shapeMap: issueShapeMap for: filteredIssues baseline: baselineDate [
+IssueGanttChartBuilder >> createShapes: shapes shapeMap: issueShapeMap for: filteredIssues baseline: baselineDate [
 	"Create all issue shapes (bars and diamonds)"
 	
 	filteredIssues withIndexDo: [ :issue :index |
@@ -297,7 +297,7 @@ GanttChartBuilder >> createShapes: shapes shapeMap: issueShapeMap for: filteredI
 ]
 
 { #category : 'initialization' }
-GanttChartBuilder >> createTooltipFor: issue isMilestone: isMilestone hasDelayDue: hasDelayDue originalStart: originalStart [
+IssueGanttChartBuilder >> createTooltipFor: issue isMilestone: isMilestone hasDelayDue: hasDelayDue originalStart: originalStart [
 	"Create tooltip text for an issue"
 	| tooltip |
 	
@@ -327,47 +327,47 @@ GanttChartBuilder >> createTooltipFor: issue isMilestone: isMilestone hasDelayDu
 ]
 
 { #category : 'initialization' }
-GanttChartBuilder >> initialize [
+IssueGanttChartBuilder >> initialize [
 	super initialize.
 	leftMargin := 150
 ]
 
 { #category : 'initialization' }
-GanttChartBuilder >> issues: aCollection [
+IssueGanttChartBuilder >> issues: aCollection [
 	issues := aCollection
 ]
 
 { #category : 'initialization' }
-GanttChartBuilder >> leftMargin: anInteger [
+IssueGanttChartBuilder >> leftMargin: anInteger [
 	leftMargin := anInteger
 ]
 
 { #category : 'initialization' }
-GanttChartBuilder >> onIssueClick: aBlock [
+IssueGanttChartBuilder >> onIssueClick: aBlock [
 	"Set the callback for when an issue is clicked"
 	clickCallback := aBlock
 ]
 
 { #category : 'initialization' }
-GanttChartBuilder >> onIssueClicked: issue with: evt [
+IssueGanttChartBuilder >> onIssueClicked: issue with: evt [
 	"Handle issue click - delegate to callback if set"
 	clickCallback ifNotNil: [ clickCallback cull: issue cull: evt ]
 ]
 
 { #category : 'initialization' }
-GanttChartBuilder >> onIssueRightClick: aBlock [
+IssueGanttChartBuilder >> onIssueRightClick: aBlock [
 	"Set the callback for when an issue is right-clicked"
 	rightClickCallback := aBlock
 ]
 
 { #category : 'initialization' }
-GanttChartBuilder >> onIssueRightClicked: issue with: evt [
+IssueGanttChartBuilder >> onIssueRightClicked: issue with: evt [
 	"Handle issue right-click - delegate to callback if set"
 	rightClickCallback ifNotNil: [ rightClickCallback cull: issue cull: evt ]
 ]
 
 { #category : 'initialization' }
-GanttChartBuilder >> showEmptyMessage [
+IssueGanttChartBuilder >> showEmptyMessage [
 	"Show a message when there are no issues to display"
 	| label |
 	

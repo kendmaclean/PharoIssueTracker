@@ -132,7 +132,7 @@ IssueTrackerGanttPresenterTest >> testGanttBuilderCreatedOnBuild [
       builder := presenter instVarNamed: 'ganttBuilder'.
 
       self assert: builder notNil.
-      self assert: (builder isKindOf: GanttChartBuilder).
+      self assert: (builder isKindOf: IssueGanttChartBuilder).
  
 
 ]
