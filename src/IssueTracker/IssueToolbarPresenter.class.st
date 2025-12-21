@@ -78,8 +78,8 @@ IssueToolbarPresenter >> initializePresenters [
 
 	"Action buttons"
 	chartButton := self newButton
-		               label: 'Chart';
-		               icon: (self iconNamed: #chart);
+		               label: 'Issue Status';
+		               icon: (self iconNamed: #smallCogInitialState);
 		               action: [ self onShowChart ];
 		               yourself.
 
@@ -95,8 +95,7 @@ IssueToolbarPresenter >> initializePresenters [
 
 	statusLabel := self newLabel
 		               label: '';
-		               yourself.
-
+		               yourself
 ]
 
 { #category : 'initialization' }

@@ -129,7 +129,7 @@ IssueListPresenter >> initializePresenters [
 
 	"Dependencies indicator column - clickable"
 	issueTable addColumn:
-		((SpStringTableColumn title: 'Deps' evaluated: [ :issue |
+		((SpStringTableColumn title: 'Dependencies' evaluated: [ :issue |
 				  issue hasDependencies
 					  ifTrue: [ '🔗 ' , issue dependencies size asString ]
 					  ifFalse: [ '-' ] ])
@@ -152,24 +152,24 @@ IssueListPresenter >> initializePresenters [
 			 yourself).
 
 	"Start date column - shows dependency-aware date in red if delayed"
-	issueTable addColumn:
-		((SpStringTableColumn title: 'Start' evaluated: [ :issue |
-			  self formatStartDate: issue ])
+	issueTable addColumn: ((SpStringTableColumn
+			  title: 'Start'
+			  evaluated: [ :issue | self formatStartDate: issue ])
 			 width: 110;
 			 beSortable;
 			 compareFunction: [ :a :b |
 				 | aDate bDate |
-				 aDate := a dependencyAwareStartDate ifNil: [ 
-					          a startDate ifNil: [ Date new year: 9999 ] ].
-				 bDate := b dependencyAwareStartDate ifNil: [ 
-					          b startDate ifNil: [ Date new year: 9999 ] ].
+				 aDate := a dependencyAwareStartDate ifNil: [
+						          a startDate ifNil: [ Date new year: 9999 ] ].
+				 bDate := b dependencyAwareStartDate ifNil: [
+						          b startDate ifNil: [ Date new year: 9999 ] ].
 				 aDate < bDate ];
 			 yourself).
 
 	"Delay column - shows how many days delayed due to dependencies"
-	issueTable addColumn:
-		((SpStringTableColumn title: '⚠' evaluated: [ :issue |
-			  self formatDelay: issue ])
+	issueTable addColumn: ((SpStringTableColumn
+			  title: 'Delay'
+			  evaluated: [ :issue | self formatDelay: issue ])
 			 width: 45;
 			 beSortable;
 			 compareFunction: [ :a :b |
@@ -182,30 +182,28 @@ IssueListPresenter >> initializePresenters [
 	"Duration column"
 	issueTable addColumn:
 		((SpStringTableColumn title: 'Dur' evaluated: [ :issue |
-			  issue duration
-				  ifNil: [ '-' ]
-				  ifNotNil: [ :d | d asString ] ])
+				  issue duration ifNil: [ '-' ] ifNotNil: [ :d | d asString ] ])
 			 width: 50;
 			 beSortable;
 			 compareFunction: [ :a :b |
-			 | aDur bDur |
-			 aDur := a duration ifNil: [ 0 ].
-			 bDur := b duration ifNil: [ 0 ].
-			 aDur < bDur ];
+				 | aDur bDur |
+				 aDur := a duration ifNil: [ 0 ].
+				 bDur := b duration ifNil: [ 0 ].
+				 aDur < bDur ];
 			 yourself).
 
 	"Due date column - shows dependency-aware date in red if delayed"
-	issueTable addColumn:
-		((SpStringTableColumn title: 'Due' evaluated: [ :issue |
-			  self formatDueDate: issue ])
+	issueTable addColumn: ((SpStringTableColumn
+			  title: 'Due'
+			  evaluated: [ :issue | self formatDueDate: issue ])
 			 width: 110;
 			 beSortable;
 			 compareFunction: [ :a :b |
 				 | aDate bDate |
-				 aDate := a dependencyAwareEndDate ifNil: [ 
-					          a dueDate ifNil: [ Date new year: 9999 ] ].
-				 bDate := b dependencyAwareEndDate ifNil: [ 
-					          b dueDate ifNil: [ Date new year: 9999 ] ].
+				 aDate := a dependencyAwareEndDate ifNil: [
+						          a dueDate ifNil: [ Date new year: 9999 ] ].
+				 bDate := b dependencyAwareEndDate ifNil: [
+						          b dueDate ifNil: [ Date new year: 9999 ] ].
 				 aDate < bDate ];
 			 yourself).
 
