@@ -123,15 +123,18 @@ IssueTrackerGanttPresenterTest >> testFilterChanged [
 ]
 
 { #category : 'tests - gantt chart' }
-IssueTrackerGanttPresenterTest >> testGanttBuilderCreatedOnBuild [
-        "Test that ganttBuilder is created when building chart"
-        | builder |
+IssueTrackerGanttPresenterTest >> testGanttBuilderCreatedOnBuild [ 
+      "Test that ganttBuilder is created when building chart"
+      | builder canvas |
 
-        presenter buildGanttChart.
-        builder := presenter instVarNamed: 'ganttBuilder'.
+      canvas := RSCanvas new.
+      presenter buildGanttOn: canvas.
+      builder := presenter instVarNamed: 'ganttBuilder'.
 
-        self assert: builder notNil.
-        self assert: (builder isKindOf: GanttChartBuilder).
+      self assert: builder notNil.
+      self assert: (builder isKindOf: GanttChartBuilder).
+ 
+
 ]
 
 { #category : 'tests - filtering' }
