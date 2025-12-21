@@ -190,19 +190,21 @@ IssueRepositoryTest >> testRemoveIssueFromMultiple [
 
 { #category : 'tests - singleton' }
 IssueRepositoryTest >> testReset [
-	"Test that reset clears the singleton instance"
 
-	| instance1 instance2 |
+	 "Test that reset clears the singleton instance"
+	| instance1 instance2 issue |
 	instance1 := TestIssueRepository uniqueInstance.
-	instance1 addIssue: (Issue new
-			 title: 'Test Issue';
-			 yourself).
+	issue := Issue new
+		         title: 'Test Issue';
+		         yourself.
+	"Add directly to issues collection to avoid auto-save"
+	instance1 issues add: issue.
 
 	TestIssueRepository reset.
 	instance2 := TestIssueRepository uniqueInstance.
 
 	self deny: instance1 identicalTo: instance2.
-	self assert: instance2 issues isEmpty
+	self assert: instance2 issues isEmpty 
 ]
 
 { #category : 'tests - singleton' }
