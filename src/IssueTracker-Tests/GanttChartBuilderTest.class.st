@@ -276,13 +276,16 @@ GanttChartBuilderTest >> testColorForStatusUnknown [
 
 { #category : 'tests - dependencies' }
 GanttChartBuilderTest >> testCreateArrowCreatesRSArrowedLine [
-      "Test that arrow is an RSArrowedLine"
-      | shape1 shape2 |
-      shape1 := RSBox new.
-      shape2 := RSBox new.
-      canvas add: shape1; add: shape2.
-      builder createArrowFrom: shape1 to: shape2.
-      self assert: (canvas shapes last isKindOf: RSArrowedLine).
+	"Test that arrow is an RSArrowedLine"
+
+	| shape1 shape2 |
+	shape1 := RSBox new.
+	shape2 := RSBox new.
+	canvas
+		add: shape1;
+		add: shape2.
+	builder createArrowFrom: shape1 to: shape2.
+	self assert: (canvas shapes first isKindOf: RSArrowedLine)
 ]
 
 { #category : 'tests - dependencies' }
