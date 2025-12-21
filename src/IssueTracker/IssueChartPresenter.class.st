@@ -16,46 +16,50 @@ IssueChartPresenter class >> open [
 	^ self new open
 ]
 
-{ #category : 'initialization' }
+{ #category : 'build' }
 IssueChartPresenter >> buildChart [
 	canvas script: [ :rsCanvas | self buildChartOn: rsCanvas ]
 ]
 
-{ #category : 'initialization' }
+{ #category : 'build' }
 IssueChartPresenter >> buildChartOn: rsCanvas [
-	| issues statusCounts bars maxCount |
-	issues := IssueRepository uniqueInstance allIssues.
-	
-	issues ifEmpty: [ ^ self showEmptyMessageOn: rsCanvas ].
-	
-	statusCounts := Dictionary new.
-	#(open inProgress resolved closed) do: [ :status |
-		statusCounts at: status put: (issues count: [ :i | i status = status ]) ].
+      self buildChartOn: rsCanvas with: IssueManager default allIssues
+]
 
-	maxCount := statusCounts values max max: 1.
-	
-	bars := statusCounts associations collect: [ :assoc |
-		| bar label composite |
-		bar := RSBox new
-			width: 100;
-			height: (assoc value / maxCount * 250 max: 10);
-			color: (self colorForStatus: assoc key);
-			model: assoc;
-			yourself.
-			
-		label := RSLabel new
-			text: assoc key asString, String cr, assoc value asString;
-			fontSize: 12;
-			bold;
-			yourself.
-			
-		composite := RSComposite new
-			shapes: { bar. label };
-			yourself ].
-			
-	rsCanvas addAll: bars.
-	RSHorizontalLineLayout new gapSize: 20; on: bars.
-	rsCanvas @ RSCanvasController
+{ #category : 'build' }
+IssueChartPresenter >> buildChartOn: rsCanvas with: issues [
+      | statusCounts bars maxCount |
+
+      issues ifEmpty: [ ^ self showEmptyMessageOn: rsCanvas ].
+
+      statusCounts := Dictionary new.
+      #(open inProgress resolved closed) do: [ :status |
+          statusCounts at: status put: (issues count: [ :i | i status = status ]) ].
+
+      maxCount := statusCounts values max max: 1.
+
+      bars := statusCounts associations collect: [ :assoc |
+          | bar label composite |
+          bar := RSBox new
+              width: 100;
+              height: (assoc value / maxCount * 250 max: 10);
+              color: (self colorForStatus: assoc key);
+              model: assoc;
+              yourself.
+
+          label := RSLabel new
+              text: assoc key asString, String cr, assoc value asString;
+              fontSize: 12;
+              bold;
+              yourself.
+
+          composite := RSComposite new
+              shapes: { bar. label };
+              yourself ].
+
+      rsCanvas addAll: bars.
+      RSHorizontalLineLayout new gapSize: 20; on: bars.
+      rsCanvas @ RSCanvasController
 ]
 
 { #category : 'initialization' }
